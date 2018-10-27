@@ -1,0 +1,17 @@
+{
+  "name": "com.synplyworks.thenmore",
+  "version": "0.1.0",
+  "description": "Homey Then addon",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "Homey"
+  ],
+  "author": "Leon van der Ree",
+  "license": "GPL3",
+  "dependencies": {
+    "athom-api": "^2.0.137"
+  }
+}
