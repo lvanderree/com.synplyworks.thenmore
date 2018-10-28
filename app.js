@@ -8,16 +8,15 @@ class ThenMoreApp extends Homey.App {
 	onInit() {
 		this.log('ThenMore App is initializing...')
 
-		this.allDevices = null
-		
+		this.cache = {}
 		this.getApi().then(api => {
 			api.devices.on('device.create', async(id) => {
-				await console.log('New device found!')
-				this.allDevices = null
+				await console.log('New device added, reset cache!')
+				this.cache = {}
 			})
 			api.devices.on('device.delete', async(id) => {
-				await console.log('Device deleted!')
-				this.allDevices = null
+				await console.log('Device deleted, reset cache!')
+				this.cache = {}
 			})
 		})
 			
@@ -31,7 +30,7 @@ class ThenMoreApp extends Homey.App {
 		new Homey.FlowCardAction('then_more_dim')
 			.register()
 			.registerRunListener( args => {
-				return this.sendNotification('Doe iets met device ' + args.device.id );
+				return this.runScript( args.device.id );
 			})
 			.getArgument('device')
 				.registerAutocompleteListener( (query, args) => {
@@ -47,13 +46,13 @@ class ThenMoreApp extends Homey.App {
 		new Homey.FlowCardAction('then_more_on_off')
 			.register()
 			.registerRunListener( args => {
-				return this.sendNotification('Doe iets met device ' + args.device.id );
+				return this.runScript( args.device.id );
 			})
 			.getArgument('device')
 				.registerAutocompleteListener( (query, args) => {
 					return this.getOnOffDevices().then( onOffDevices => {
 						let filteredResults = onOffDevices.filter( device => {
-							return device.name.toLowerCase().indexOf( query.toLowerCase() ) > -1;
+							return device.name.toLowerCase().indexOf(query.toLowerCase()) > -1;
 						})
 
 						return Promise.resolve(filteredResults);
@@ -62,9 +61,9 @@ class ThenMoreApp extends Homey.App {
 
 	}
 
-	sendNotification(message) {
-		new Homey.Notification({
-			excerpt: message
+	async runScript(deviceId) {
+		return new Homey.Notification({
+			excerpt: 'Doe iets met device ' + deviceId
 		}).register()
 	}
 	
@@ -79,15 +78,14 @@ class ThenMoreApp extends Homey.App {
 
 	// Get all devices function for API
 	async getAllDevices() {
-		const api = await this.getApi();
+		if (!this.cache.allDevices) {
+			const api = await this.getApi();
 
-		if (this.allDevices == null)
-		{
-			this.allDevices = Object.values(await api.devices.getDevices())
-			this.log(`total devices: ${this.allDevices.length}`)
+			this.cache.allDevices = Object.values(await api.devices.getDevices())
+			this.log(`Update ${this.cache.allDevices.length} devices in total in cache`)
 		}
 		
-		return this.allDevices;
+		return this.cache.allDevices;
 	}
 
 	/**
@@ -95,16 +93,18 @@ class ThenMoreApp extends Homey.App {
 	 * and filter all without on/off capability
 	 */
 	async getOnOffDevices() {
-		let onOffdevices = (await this.getAllDevices()).filter(device => {
-			return (
-				'onoff' in device.capabilities &&
-				device.capabilities.onoff.setable
-			)
-		});
+		if (!this.cache.onOffDevices)	{ 
+			this.cache.onOffDevices = (await this.getAllDevices()).filter(device => {
+				return (
+					'onoff' in device.capabilities &&
+					device.capabilities.onoff.setable
+				)
+			});
 
-		this.log(`OnOff devices: ${onOffdevices.length}`)
+			this.log(`Update ${this.cache.onOffDevices.length} OnOff devices in cache`)
+		}
 
-		return onOffdevices;
+		return this.cache.onOffDevices;
 	}
 
 	/**
@@ -112,16 +112,18 @@ class ThenMoreApp extends Homey.App {
 	 * and filter all without on/off capability
 	 */
 	async getDimDevices() {
-		let dimdevices = (await this.getAllDevices()).filter(device => {
-			return (
-				'dim' in device.capabilities &&
-				device.capabilities.dim.setable
-			)
-		});
+		if (!this.cache.dimDevices)	{ 
+			this.cache.dimDevices = (await this.getAllDevices()).filter(device => {
+				return (
+					'dim' in device.capabilities &&
+					device.capabilities.dim.setable
+				)
+			});
+			
+			this.log(`Update ${this.cache.dimDevices.length} Dimable devices in cache`)
+		}
 
-		this.log(`Dimable devices: ${dimdevices.length}`)
-
-		return dimdevices;
+		return this.cache.dimDevices;
 	}
 
 }

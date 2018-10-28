@@ -39,11 +39,6 @@
           {
             "name": "device",
             "type": "autocomplete"
-          },
-          {
-            "name": "enable",
-            "type": "dropdown",
-            "values": [ { "id": "on", "label": { "en": "On" } }, { "id": "off", "label": { "en": "Off" } } ]
           }
         ]
       },
@@ -63,7 +58,7 @@
             "type": "autocomplete"
           },
           {
-            "name": "set_forced_brightness_level",
+            "name": "set_brightness_level",
             "type": "range",
             "min": 0,
             "max": 1,
