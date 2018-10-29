@@ -33,7 +33,13 @@ class ThenMoreApp extends Homey.App {
 		new Homey.FlowCardAction('then_more_dim')
 			.register()
 			.registerRunListener( args => {
-				return this.runScript( args.device.id );
+				return this.runScript( 
+					args.device.id, 
+					{ 'capability': 'dim', 'value': args.brightness_level },
+					args.time_on,
+					args.ignore_when_on,
+					args.overrule_longer_timeouts
+				);
 			})
 			.getArgument('device')
 				.registerAutocompleteListener( (query, args) => {
@@ -53,7 +59,13 @@ class ThenMoreApp extends Homey.App {
 		new Homey.FlowCardAction('then_more_on_off')
 			.register()
 			.registerRunListener( args => {
-				return this.runScript( args.device.id );
+				return this.runScript( 
+					args.device.id, 
+					{ 'capability': 'onoff', 'value': true },
+					args.time_on,
+					args.ignore_when_on,
+					args.overrule_longer_timeouts
+				);
 			})
 			.getArgument('device')
 				.registerAutocompleteListener( (query, args) => {
@@ -71,40 +83,56 @@ class ThenMoreApp extends Homey.App {
 			})
 	}
 
-	async runScript(deviceId) {
+	async runScript(deviceId, action, timeOn, ignoreWhenOn, overruleLongerTimeouts) {
 
 		
 		const api = await this.getApi();
-		
-		let value = await api.devices.getDeviceCapabilityState({id: deviceId, capability: 'onoff'})
-		
-		// first check if there is a reference for a running timer for this device
-		if (deviceId in this.timers) {
-			// if so, cancel timer and remove reference
-			clearTimeout(this.timers[deviceId])
-			this.log(`cancel timer for device ${deviceId}`)
-			this.timers.splice(deviceId, 1)
-		} else {
-			// if not already running, turn device on (else leaf it as it is)
-			this.log(`turn ${deviceId} on`)
-			// await api.devices.setDeviceCapabilityState({id: deviceId, capability: 'onoff', value: true}); 
-		}
-		
-		// (re)set timeout
-		let timeoudId = setTimeout(function () {
-			this.log(`turn ${deviceId} off, after delay`)
-			// await api.devices.setDeviceCapabilityState({id: deviceId, capability: 'onoff', value: false}); 
+
+		// run script when...
+		if (
+			// ... ignoring current on-state
+			(ignoreWhenOn == "no") ||
+			// .. or when previously activated by this script (and when overrule longer, or new timer is later)
+			(
+				deviceId in this.timers && 
+				((overruleLongerTimeouts == "yes") || (new Date().getTime() + timeOn * 1000 > this.timers[deviceId].offTime))
+			) ||
+			// or when device is off
+			(await api.devices.getDeviceCapabilityState({id: deviceId, capability: 'onoff'}) == false)
+		) { 
+			// first check if there is a reference for a running timer for this device
+			if (deviceId in this.timers) {
+				// if so, cancel timer and remove reference
+				clearTimeout(this.timers[deviceId].id);
+				this.log(`cancel (and reset) timer for device ${deviceId}`);
+				delete this.timers[deviceId];
+			} else {
+				// if not already running, turn device on (else leaf it as it is)
+				this.log(`turn ${deviceId} on`);
+				await api.devices.setDeviceCapabilityState({id: deviceId, capability: action.capability, value: action.value});
+			}
 			
-			// remove reference of timer for this device
-			delete this.timers[deviceId]
-		}.bind(this), 5000)
-
-		// remember reference of timer for this device
-		this.timers[deviceId] = timeoudId
-
+			// (re)set timeout
+			let timeoudId = setTimeout(function (api) {
+				this.log(`turn ${deviceId} off, after delay`);
+				this.turnOff(deviceId);
+				
+				// remove reference of timer for this device
+				delete this.timers[deviceId];
+			}.bind(this, [api]), timeOn * 1000);
+			
+			// remember reference of timer for this device and when it will end
+			this.timers[deviceId] = {id: timeoudId, end_time: new Date().getTime() + timeOn * 1000};
+		}
+			
 		return Promise.resolve(true)
 	}
-	
+
+	async turnOff(deviceId) {
+		const api = await this.getApi();
+		await api.devices.setDeviceCapabilityState({id: deviceId, capability: 'onoff', value: false}); 
+	}
+		
 	// Get API control function
 	getApi() {
 		if (!this.api) {

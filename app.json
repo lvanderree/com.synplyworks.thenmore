@@ -39,6 +39,28 @@
           {
             "name": "device",
             "type": "autocomplete"
+          },
+          {
+            "name": "time_on",
+            "type": "number",
+            "min": 1,
+            "placeholder": { "en": "Time (in s) to keep the device on", "nl": "Tijd (in s) om het apparaat aan te houden" }
+          },
+          {
+            "name": "ignore_when_on",
+            "type": "dropdown",
+            "values": [ 
+              { "id": "yes", "label": { "en": "Ignore when device is already on", "nl": "Negeer als het apparaat al aan staat" } },
+              { "id": "no", "label": { "en": "Control it anyway", "nl": "Beheers het toch" } } 
+            ]
+          },
+          {
+            "name": "overrule_longer_timeouts",
+            "type": "dropdown",
+            "values": [ 
+              { "id": "no", "label": { "en": "Keep longer timeouts", "nl": "Langere timeouts behouden" } }, 
+              { "id": "yes", "label": { "en": "Shorter timeouts win", "nl": "Kortere timeouts worden toch gezet" } }
+            ]
           }
         ]
       },
@@ -65,6 +87,28 @@
             "step": 0.01,
             "label": "%",
             "labelMultiplier": 100
+          },
+          {
+            "name": "time_on",
+            "type": "number",
+            "min": 1,
+            "placeholder": { "en": "Time (in s) to keep the device on", "nl": "Tijd (in s) om het apparaat aan te houden" }
+          },
+          {
+            "name": "ignore_when_on",
+            "type": "dropdown",
+            "values": [ 
+              { "id": "yes", "label": { "en": "Ignore when device is already on", "nl": "Negeer als het apparaat al aan staat" } },
+              { "id": "no", "label": { "en": "Control it anyway", "nl": "Beheers het toch" } } 
+            ]
+          },
+          {
+            "name": "overrule_longer_timeouts",
+            "type": "dropdown",
+            "values": [ 
+              { "id": "no", "label": { "en": "Keep running timer, if its longer than this time", "nl": "Behoud lopende timers, wanneer deze nog langer duren dan deze tijd" } }, 
+              { "id": "yes", "label": { "en": "Set this timer, even if its shorter than time remaining when there is a running timer", "nl": "Zet deze timer, zelfs als deze timer korter is dan een lopende timer" } }
+            ]
           }
         ]
       }
