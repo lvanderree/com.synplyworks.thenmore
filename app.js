@@ -8,9 +8,11 @@ class ThenMoreApp extends Homey.App {
 	onInit() {
 		this.log('ThenMore App is initializing...')
 
+		// remember timeoutIds per device
 		this.timers = []
 
 		this.cache = {}
+		// invalidate cache when devices are added/removed
 		this.getApi().then(api => {
 			api.devices.on('device.create', async(id) => {
 				await console.log('New device added, reset cache!')
