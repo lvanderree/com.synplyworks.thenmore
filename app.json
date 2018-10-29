@@ -58,7 +58,7 @@
             "type": "autocomplete"
           },
           {
-            "name": "set_brightness_level",
+            "name": "brightness_level",
             "type": "range",
             "min": 0,
             "max": 1,

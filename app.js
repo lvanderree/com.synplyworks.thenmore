@@ -8,6 +8,8 @@ class ThenMoreApp extends Homey.App {
 	onInit() {
 		this.log('ThenMore App is initializing...')
 
+		this.timers = []
+
 		this.cache = {}
 		this.getApi().then(api => {
 			api.devices.on('device.create', async(id) => {
@@ -20,9 +22,8 @@ class ThenMoreApp extends Homey.App {
 			})
 		})
 			
-		// this.getOnOffDevices() // TODO: init for drop down
 		this.initFlowCards()
-		
+
 		this.log('ThenMore App is running...')
 	}
 
@@ -36,7 +37,11 @@ class ThenMoreApp extends Homey.App {
 				.registerAutocompleteListener( (query, args) => {
 					return this.getDimDevices().then( dimDevices => {
 						let filteredResults = dimDevices.filter( device => {
-							return device.name.toLowerCase().indexOf( query.toLowerCase() ) > -1;
+							return (
+								device.name.toLowerCase().indexOf( query.toLowerCase() ) > -1
+							) || (
+								device.zone.name.toLowerCase().indexOf( query.toLowerCase() ) > -1
+							)
 						})
 
 						return Promise.resolve(filteredResults);
@@ -52,19 +57,50 @@ class ThenMoreApp extends Homey.App {
 				.registerAutocompleteListener( (query, args) => {
 					return this.getOnOffDevices().then( onOffDevices => {
 						let filteredResults = onOffDevices.filter( device => {
-							return device.name.toLowerCase().indexOf(query.toLowerCase()) > -1;
+							return (
+								device.name.toLowerCase().indexOf(query.toLowerCase()) > -1
+							) || ( 
+								device.zone.name.toLowerCase().indexOf(query.toLowerCase()) > -1
+							)
 						})
 
 						return Promise.resolve(filteredResults);
 					})
 			})
-
 	}
 
 	async runScript(deviceId) {
-		return new Homey.Notification({
-			excerpt: 'Doe iets met device ' + deviceId
-		}).register()
+
+		
+		const api = await this.getApi();
+		
+		let value = await api.devices.getDeviceCapabilityState({id: deviceId, capability: 'onoff'})
+		
+		// first check if there is a reference for a running timer for this device
+		if (deviceId in this.timers) {
+			// if so, cancel timer and remove reference
+			clearTimeout(this.timers[deviceId])
+			this.log(`cancel timer for device ${deviceId}`)
+			this.timers.splice(deviceId, 1)
+		} else {
+			// if not already running, turn device on (else leaf it as it is)
+			this.log(`turn ${deviceId} on`)
+			// await api.devices.setDeviceCapabilityState({id: deviceId, capability: 'onoff', value: true}); 
+		}
+		
+		// (re)set timeout
+		let timeoudId = setTimeout(function () {
+			this.log(`turn ${deviceId} off, after delay`)
+			// await api.devices.setDeviceCapabilityState({id: deviceId, capability: 'onoff', value: false}); 
+			
+			// remove reference of timer for this device
+			delete this.timers[deviceId]
+		}.bind(this), 5000)
+
+		// remember reference of timer for this device
+		this.timers[deviceId] = timeoudId
+
+		return Promise.resolve(true)
 	}
 	
 	// Get API control function
