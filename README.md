@@ -1,10 +1,23 @@
-# Then More
+# Then More - add Timers to temporarily turn on devices ![SDK2][logo]
 
-Adds More functionality in the Then... clause of your flows, to be able to turn (dimmed) devices on for a period of time.
+This app adds More functionality to the Then... clause of your flows, to be able to turn (dimmed) devices on for a period of time.
 
-Simply add a ThenMore card one or more times to the Then... clause of your flow, select an OnOff, or Dimable device and enter the amount of seconds to keep the device on.
+## How does it work?
+* Create a flow with for example a motion sensor, but basically anything you like as a trigger in the When... clause
+* Add a ThenMore-card to the Then... clause of your flow
+  * Select an OnOff device, or scroll to the Dimable device card
+  * Enter the amount of seconds to keep the device on
+  * You can configure to not activate the device (with the associated off timer), when the device is already on.
+  * When you have multiple flows, activating the same device, but with different durations, you can also define to set the duration to the current configured time, even when it's shorter than the time left in the running timer.
 
 When the flow (or another flow with the same device entered in the ThenMore card) is triggered again, the timer gets reset, and the device is kept on for a longer period of time.
 
-You can configure to not activate the device (with the associated off timer), when the device is already on.
-When you have multiple flows, activating the same device, but with different durations, you can also configure to set the duration to the current configured time, even when it's shorter than the time left in the running timer.
+Feel free to add multiple ThenMore-cards in the same flow, or select the same device in more than one flow via the ThenMore-cards.
+
+## Todo
+
+## Known issues
+* None so far
+
+## Version 0.1.0 β
+* initial release
