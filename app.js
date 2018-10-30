@@ -41,6 +41,7 @@ class ThenMoreApp extends Homey.App {
 					args.overrule_longer_timeouts
 				);
 			})
+			// TODO: DRY registerAutocompleteListener
 			.getArgument('device')
 				.registerAutocompleteListener( (query, args) => {
 					return this.getDimDevices().then( dimDevices => {
@@ -81,11 +82,57 @@ class ThenMoreApp extends Homey.App {
 						return Promise.resolve(filteredResults);
 					})
 			})
+
+		new Homey.FlowCardAction('cancel_timer')
+			.register()
+			.registerRunListener( args => {
+				return this.cancelTimer( 
+					args.device.id, 
+				);
+			})
+			.getArgument('device')
+				.registerAutocompleteListener( (query, args) => {
+					return this.getOnOffDevices().then( onOffDevices => {
+						let filteredResults = onOffDevices.filter( device => {
+							return (
+								device.name.toLowerCase().indexOf(query.toLowerCase()) > -1
+							) || ( 
+								device.zone.name.toLowerCase().indexOf(query.toLowerCase()) > -1
+							)
+						})
+
+						return Promise.resolve(filteredResults);
+					})
+			})
+			
+		new Homey.FlowCardCondition('is_timer_running')
+			.register()
+			.on('run', ( args, state, callback ) => {
+				if (this.isTimerRunning(args.device.id)) {
+					callback( null, true )
+				}
+				else {
+					callback( null, false )
+				}
+			})
+			.getArgument('device')
+				.registerAutocompleteListener( (query, args) => {
+					return this.getOnOffDevices().then( onOffDevices => {
+						let filteredResults = onOffDevices.filter( device => {
+							return (
+								device.name.toLowerCase().indexOf(query.toLowerCase()) > -1
+							) || ( 
+								device.zone.name.toLowerCase().indexOf(query.toLowerCase()) > -1
+							)
+						})
+
+						return Promise.resolve(filteredResults);
+					})
+				})
 	}
 
 	async runScript(deviceId, action, timeOn, ignoreWhenOn, overruleLongerTimeouts) {
 
-		
 		const api = await this.getApi();
 
 		// run script when...
@@ -101,20 +148,17 @@ class ThenMoreApp extends Homey.App {
 			(await api.devices.getDeviceCapabilityState({id: deviceId, capability: 'onoff'}) == false)
 		) { 
 			// first check if there is a reference for a running timer for this device
-			if (deviceId in this.timers) {
-				// if so, cancel timer and remove reference
-				clearTimeout(this.timers[deviceId].id);
-				this.log(`cancel (and reset) timer for device ${deviceId}`);
-				delete this.timers[deviceId];
+			if (this.isTimerRunning(deviceId)) {
+				this.cancelTimer(deviceId)
 			} else {
 				// if not already running, turn device on (else leaf it as it is)
-				this.log(`turn ${deviceId} on`);
+				this.log(`Turn ${deviceId} on`);
 				await api.devices.setDeviceCapabilityState({id: deviceId, capability: action.capability, value: action.value});
 			}
 			
 			// (re)set timeout
 			let timeoudId = setTimeout(function (api) {
-				this.log(`turn ${deviceId} off, after delay`);
+				this.log(`Turn ${deviceId} off, after delay`);
 				this.turnOff(deviceId);
 				
 				// remove reference of timer for this device
@@ -125,6 +169,30 @@ class ThenMoreApp extends Homey.App {
 			this.timers[deviceId] = {id: timeoudId, end_time: new Date().getTime() + timeOn * 1000};
 		}
 			
+		return Promise.resolve(true)
+	}
+
+	isTimerRunning(deviceId) {
+		let hasTimer = deviceId in this.timers;
+		
+		if (hasTimer) {
+			this.log(`Timer for device ${deviceId} found` );
+		} else {
+			this.log(`Timer for device ${deviceId} not found` );
+		}
+		return hasTimer;
+	}
+
+	cancelTimer(deviceId) {
+		this.log(`Trying to cancel timer for device ${deviceId}`);
+
+		if (deviceId in this.timers) {
+			// if timer is running cancel timer and remove reference
+			clearTimeout(this.timers[deviceId].id);
+			this.log(`Cancelled timer for device ${deviceId}`);
+			delete this.timers[deviceId];
+		}
+
 		return Promise.resolve(true)
 	}
 

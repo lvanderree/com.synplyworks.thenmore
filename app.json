@@ -11,7 +11,7 @@
     "homey:manager:api"
   ],
   "category": ["lights", "tools", "security"],
-  "version": "0.1.0",
+  "version": "0.2.0",
   "compatibility": ">=1.5.0",
   "author": {
     "name": "Leon Ree",
@@ -28,8 +28,8 @@
       {
         "id": "then_more_on_off",
         "title": {
-          "en": "Countdown Enabled",
-          "nl": "Zandloper ingeschakeld"
+          "en": "Timer enabled",
+          "nl": "Timer ingeschakeld"
         },
         "hint": {
           "en": "With this action you can keep your device enabled for some time",
@@ -67,12 +67,12 @@
       {
         "id": "then_more_dim",
         "title": {
-          "en": "Countdown Enabled Dim",
-          "nl": "Zandloper ingeschakeld Dim"
+          "en": "Timer enabled Dim",
+          "nl": "Timer ingeschakeld Dim"
         },
         "hint": {
-          "en": "With this action you can keep your device enabled for some time",
-          "nl": "Met deze actie kan je je apparaat een tijd ingeschakeld houden"
+          "en": "With this action you can keep your dimable device enabled for some time",
+          "nl": "Met deze actie kan je je dimbare apparaat een tijd ingeschakeld houden"
         },
         "args": [
           {
@@ -111,6 +111,38 @@
             ]
           }
         ]
+      },
+      {
+        "id": "cancel_timer",
+        "title": {
+          "en": "Cancel timer",
+          "nl": "Annuleer timer"
+        },
+        "hint": {
+          "en": "Cancel a running timer, preventing the device from turning off",
+          "nl": "Stop een lopende timer, waardoor het apparaat niet uit zal schakelen"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "autocomplete"
+          }
+        ]
+      }
+    ],
+    "conditions": [
+      {
+          "id": "is_timer_running",
+          "title": {
+              "en": "Timer !{{is|isn't}} running",
+              "nl": "Timer loopt !{{|niet}}"
+          },
+          "args": [
+            {
+              "name": "device",
+              "type": "autocomplete"
+            }
+          ]
       }
     ]
   }

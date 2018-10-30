@@ -19,5 +19,10 @@ Feel free to add multiple ThenMore-cards in the same flow, or select the same de
 ## Known issues
 * None so far
 
+## Version 0.2.0 β
+* added 2 extra cards
+  * condition: is timer running
+  * action: cancel running timer
+
 ## Version 0.1.0 β
 * initial release
