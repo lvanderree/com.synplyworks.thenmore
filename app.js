@@ -38,7 +38,8 @@ class ThenMoreApp extends Homey.App {
 					{ 'capability': 'dim', 'value': args.brightness_level },
 					args.time_on,
 					args.ignore_when_on,
-					args.overrule_longer_timeouts
+					args.overrule_longer_timeouts,
+					args.restore
 				);
 			})
 			// TODO: DRY registerAutocompleteListener
@@ -55,7 +56,8 @@ class ThenMoreApp extends Homey.App {
 
 						return Promise.resolve(filteredResults);
 					})
-			})
+				})
+
 
 		new Homey.FlowCardAction('then_more_on_off')
 			.register()
@@ -81,7 +83,7 @@ class ThenMoreApp extends Homey.App {
 
 						return Promise.resolve(filteredResults);
 					})
-			})
+				})
 
 		new Homey.FlowCardAction('cancel_timer')
 			.register()
@@ -103,7 +105,7 @@ class ThenMoreApp extends Homey.App {
 
 						return Promise.resolve(filteredResults);
 					})
-			})
+				})
 			
 		new Homey.FlowCardCondition('is_timer_running')
 			.register()
@@ -131,9 +133,10 @@ class ThenMoreApp extends Homey.App {
 				})
 	}
 
-	async runScript(deviceId, action, timeOn, ignoreWhenOn, overruleLongerTimeouts) {
+	async runScript(deviceId, action, timeOn, ignoreWhenOn, overruleLongerTimeouts, restore = "no") {
 
 		const api = await this.getApi();
+		let oldValue = null;
 
 		// run script when...
 		if (
@@ -153,17 +156,25 @@ class ThenMoreApp extends Homey.App {
 			} else {
 				// if not already running, turn device on (else leaf it as it is)
 				this.log(`Turn ${deviceId} on`);
+				// if restore is set to on, and the device is currently on, remember current value
+				if (restore == "yes" && await api.devices.getDeviceCapabilityState({id: deviceId, capability: 'onoff'})) {
+					this.log(`remember state for ${deviceId} (since on and restore on)`);
+					oldValue = await api.devices.getDeviceCapabilityState({id: deviceId, capability: action.capability});
+				}
 				await api.devices.setDeviceCapabilityState({id: deviceId, capability: action.capability, value: action.value});
 			}
 			
 			// (re)set timeout
-			let timeoudId = setTimeout(function (api) {
-				this.log(`Turn ${deviceId} off, after delay`);
-				this.turnOff(deviceId);
+			let timeoudId = setTimeout(function (deviceId, capability, oldValue) {
+				if (!oldValue) {
+					this.turnOff(deviceId);
+				} else {
+					this.setDeviceCapabilityState(deviceId, capability, oldValue)
+				}
 				
 				// remove reference of timer for this device
 				delete this.timers[deviceId];
-			}.bind(this, [api]), timeOn * 1000);
+			}.bind(this, deviceId, action.capability, oldValue), timeOn * 1000);
 			
 			// remember reference of timer for this device and when it will end
 			this.timers[deviceId] = {id: timeoudId, end_time: new Date().getTime() + timeOn * 1000};
@@ -196,9 +207,17 @@ class ThenMoreApp extends Homey.App {
 		return Promise.resolve(true)
 	}
 
-	async turnOff(deviceId) {
+	// turn of a device
+	turnOff(deviceId) {
+		this.setDeviceCapabilityState(deviceId, 'onoff', false)
+	}
+
+	// set a device to a certain state
+	async setDeviceCapabilityState(deviceId, capability, value) {
+		this.log(`set device ${deviceId} - ${capability} to ${value}!!` );
+
 		const api = await this.getApi();
-		await api.devices.setDeviceCapabilityState({id: deviceId, capability: 'onoff', value: false}); 
+		await api.devices.setDeviceCapabilityState({id: deviceId, capability: capability, value: value});
 	}
 		
 	// Get API control function

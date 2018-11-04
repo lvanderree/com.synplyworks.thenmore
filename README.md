@@ -19,6 +19,10 @@ Feel free to add multiple ThenMore-cards in the same flow, or select the same de
 ## Known issues
 * None so far
 
+## Version 0.3.0 β
+* added extra feature on dim card
+  * restore previous dim level
+
 ## Version 0.2.0 β
 * added 2 extra cards
   * condition: is timer running
