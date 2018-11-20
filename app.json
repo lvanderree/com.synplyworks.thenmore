@@ -5,13 +5,13 @@
     "en": "Then More"
   },
   "description": {
-    "en": "Adds More functionality in the Then clause of your flows"
+    "en": "Then More Adds Timer functionality in the Then clause of your flows"
   },
   "permissions": [
     "homey:manager:api"
   ],
   "category": ["tools"],
-  "version": "0.3.0",
+  "version": "0.3.1",
   "compatibility": ">=1.5.0",
   "author": {
     "name": "Leon Ree",

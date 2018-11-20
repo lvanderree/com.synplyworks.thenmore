@@ -1,4 +1,4 @@
-# Then More - add Timers to temporarily turn on devices ![SDK2][logo]
+# Then More - add Timers to temporarily turn on devices
 
 This app adds More functionality to the Then... clause of your flows, to be able to turn (dimmed) devices on for a period of time.
 
@@ -15,9 +15,13 @@ When the flow (or another flow with the same device entered in the ThenMore card
 Feel free to add multiple ThenMore-cards in the same flow, or select the same device in more than one flow via the ThenMore-cards.
 
 ## Todo
+* add an overview of running timers in settings (similar to what the Countdown app does) 
 
 ## Known issues
 * None so far
+
+## Version 0.3.1
+* fixed a bug that prevented timers could get reset
 
 ## Version 0.3.0 β
 * added extra feature on dim card

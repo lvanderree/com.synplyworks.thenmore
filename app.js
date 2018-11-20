@@ -149,7 +149,7 @@ class ThenMoreApp extends Homey.App {
 			) ||
 			// or when device is off
 			(await api.devices.getDeviceCapabilityState({id: deviceId, capability: 'onoff'}) == false)
-		) { 
+		) {
 			// first check if there is a reference for a running timer for this device
 			if (this.isTimerRunning(deviceId)) {
 				this.cancelTimer(deviceId)
@@ -177,9 +177,9 @@ class ThenMoreApp extends Homey.App {
 			}.bind(this, deviceId, action.capability, oldValue), timeOn * 1000);
 			
 			// remember reference of timer for this device and when it will end
-			this.timers[deviceId] = {id: timeoudId, end_time: new Date().getTime() + timeOn * 1000};
+			this.timers[deviceId] = {id: timeoudId, offTime: new Date().getTime() + timeOn * 1000};
 		}
-			
+
 		return Promise.resolve(true)
 	}
 
