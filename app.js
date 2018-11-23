@@ -9,7 +9,7 @@ class ThenMoreApp extends Homey.App {
 		this.log('ThenMore App is initializing...')
 
 		// remember timeoutIds per device
-		this.timers = []
+		this.timers = [];
 
 		this.cache = {}
 		// invalidate cache when devices are added/removed
@@ -34,7 +34,7 @@ class ThenMoreApp extends Homey.App {
 			.register()
 			.registerRunListener( args => {
 				return this.runScript( 
-					args.device.id, 
+					args.device, 
 					{ 'capability': 'dim', 'value': args.brightness_level },
 					args.time_on,
 					args.ignore_when_on,
@@ -63,7 +63,7 @@ class ThenMoreApp extends Homey.App {
 			.register()
 			.registerRunListener( args => {
 				return this.runScript( 
-					args.device.id, 
+					args.device, 
 					{ 'capability': 'onoff', 'value': true },
 					args.time_on,
 					args.ignore_when_on,
@@ -89,7 +89,7 @@ class ThenMoreApp extends Homey.App {
 			.register()
 			.registerRunListener( args => {
 				return this.cancelTimer( 
-					args.device.id, 
+					args.device, 
 				);
 			})
 			.getArgument('device')
@@ -110,7 +110,7 @@ class ThenMoreApp extends Homey.App {
 		new Homey.FlowCardCondition('is_timer_running')
 			.register()
 			.on('run', ( args, state, callback ) => {
-				if (this.isTimerRunning(args.device.id)) {
+				if (this.isTimerRunning(args.device)) {
 					callback( null, true )
 				}
 				else {
@@ -133,7 +133,7 @@ class ThenMoreApp extends Homey.App {
 				})
 	}
 
-	async runScript(deviceId, action, timeOn, ignoreWhenOn, overruleLongerTimeouts, restore = "no") {
+	async runScript(device, action, timeOn, ignoreWhenOn, overruleLongerTimeouts, restore = "no") {
 
 		const api = await this.getApi();
 		let oldValue = null;
@@ -144,80 +144,87 @@ class ThenMoreApp extends Homey.App {
 			(ignoreWhenOn == "no") ||
 			// .. or when previously activated by this script (and when overrule longer, or new timer is later)
 			(
-				deviceId in this.timers && 
-				((overruleLongerTimeouts == "yes") || (new Date().getTime() + timeOn * 1000 > this.timers[deviceId].offTime))
+				device.id in this.timers && 
+				((overruleLongerTimeouts == "yes") || (new Date().getTime() + timeOn * 1000 > this.timers[device.id].offTime))
 			) ||
 			// or when device is off
-			(await api.devices.getDeviceCapabilityState({id: deviceId, capability: 'onoff'}) == false)
+			(await api.devices.getDeviceCapabilityState({id: device.id, capability: 'onoff'}) == false)
 		) {
 			// first check if there is a reference for a running timer for this device
-			if (this.isTimerRunning(deviceId)) {
-				this.cancelTimer(deviceId)
+			if (this.isTimerRunning(device)) {
+				this.cancelTimer(device)
 			} else {
 				// if not already running, turn device on (else leaf it as it is)
-				this.log(`Turn ${deviceId} on`);
+				this.log(`Turn ${device.id} on`);
 				// if restore is set to on, and the device is currently on, remember current value
-				if (restore == "yes" && await api.devices.getDeviceCapabilityState({id: deviceId, capability: 'onoff'})) {
-					this.log(`remember state for ${deviceId} (since on and restore on)`);
-					oldValue = await api.devices.getDeviceCapabilityState({id: deviceId, capability: action.capability});
+				if (restore == "yes" && await api.devices.getDeviceCapabilityState({id: device.id, capability: 'onoff'})) {
+					this.log(`remember state for ${device.id} (since on and restore on)`);
+					oldValue = await api.devices.getDeviceCapabilityState({id: device.id, capability: action.capability});
 				}
-				await api.devices.setDeviceCapabilityState({id: deviceId, capability: action.capability, value: action.value});
+				await api.devices.setDeviceCapabilityState({id: device.id, capability: action.capability, value: action.value, timeOn: timeOn});
 			}
 			
 			// (re)set timeout
-			let timeoudId = setTimeout(function (deviceId, capability, oldValue) {
+			let timeoudId = setTimeout(function (device, capability, oldValue) {
+				this.log(`Timeout ${device.id}`);
+
 				if (!oldValue) {
-					this.turnOff(deviceId);
+					this.turnOff(device);
 				} else {
-					this.setDeviceCapabilityState(deviceId, capability, oldValue)
+					this.setDeviceCapabilityState(device, capability, oldValue)
 				}
 				
 				// remove reference of timer for this device
-				delete this.timers[deviceId];
-			}.bind(this, deviceId, action.capability, oldValue), timeOn * 1000);
+				delete this.timers[device.id];
+				Homey.ManagerApi.realtime('timer_deleted', { timers: this.exportTimers(), device: device });
+			}.bind(this, device, action.capability, oldValue), timeOn * 1000);
 			
 			// remember reference of timer for this device and when it will end
-			this.timers[deviceId] = {id: timeoudId, offTime: new Date().getTime() + timeOn * 1000};
+			this.timers[device.id] = {id: timeoudId, device: device, offTime: new Date().getTime() + timeOn * 1000};
+			// tell the world the timer is (re)started
+			Homey.ManagerApi.realtime('timer_started', {timers: this.exportTimers(), device: device, capability: action.capability, value: action.value});
 		}
 
 		return Promise.resolve(true)
 	}
 
-	isTimerRunning(deviceId) {
-		let hasTimer = deviceId in this.timers;
+	isTimerRunning(device) {
+		let hasTimer = device.id in this.timers;
 		
 		if (hasTimer) {
-			this.log(`Timer for device ${deviceId} found` );
+			this.log(`Timer for device ${device.id} found` );
 		} else {
-			this.log(`Timer for device ${deviceId} not found` );
+			this.log(`Timer for device ${device.id} not found` );
 		}
 		return hasTimer;
 	}
 
-	cancelTimer(deviceId) {
-		this.log(`Trying to cancel timer for device ${deviceId}`);
+	cancelTimer(device) {
+		this.log(`Cancel timer for device ${device.id}`);
 
-		if (deviceId in this.timers) {
+		if (device.id in this.timers) {
 			// if timer is running cancel timer and remove reference
-			clearTimeout(this.timers[deviceId].id);
-			this.log(`Cancelled timer for device ${deviceId}`);
-			delete this.timers[deviceId];
+			clearTimeout(this.timers[device.id].id);
+			this.log(`Cancelled timer for device ${device.id}`);
+			delete this.timers[device.id];
+
+			Homey.ManagerApi.realtime('timer_deleted',  { timers: this.exportTimers(), device: device });
 		}
 
 		return Promise.resolve(true)
 	}
 
 	// turn of a device
-	turnOff(deviceId) {
-		this.setDeviceCapabilityState(deviceId, 'onoff', false)
+	turnOff(device) {
+		this.setDeviceCapabilityState(device, 'onoff', false)
 	}
 
 	// set a device to a certain state
-	async setDeviceCapabilityState(deviceId, capability, value) {
-		this.log(`set device ${deviceId} - ${capability} to ${value}!!` );
+	async setDeviceCapabilityState(device, capability, value) {
+		this.log(`set device ${device.id} - ${capability} to ${value}!!` );
 
 		const api = await this.getApi();
-		await api.devices.setDeviceCapabilityState({id: deviceId, capability: capability, value: value});
+		await api.devices.setDeviceCapabilityState({id: device.id, capability: capability, value: value});
 	}
 		
 	// Get API control function
@@ -227,6 +234,18 @@ class ThenMoreApp extends Homey.App {
 		}
 
 		return this.api;
+	}
+
+	// Get Timers
+	exportTimers() {
+		let data = {};
+
+		for (let key in this.timers) {
+			data[key] = Object.assign({}, this.timers[key]);
+			delete data[key].id; // remove timeout id which cannot be exported
+		}
+
+		return data;
 	}
 
 	// Get all devices function for API

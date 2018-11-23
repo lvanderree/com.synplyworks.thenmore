@@ -1,0 +1,74 @@
+<!doctype html>
+<html ng-app="ThenMoreApp">
+    <head>
+        <script type="text/javascript" src="/homey.js" data-origin="settings"></script>
+        <script type="text/javascript" src="/manager/webserver/assets/js/angular.js"></script>
+        <script type="text/javascript" src="smart-table.min.js"></script>
+        <script type="text/javascript" src="thenMoreController.js"></script>
+
+        <style>
+            table.timerTable {
+                width: 100%;
+                border-collapse: collapse;
+            }
+
+            table.timerTable, table.timerTable th, table.timerTable td {
+                border: #22a 1px solid;
+            }
+
+            table.timerTable, table.timerTable th, table.timerTable td {
+                padding: 5px;
+                text-align: left;
+            }
+
+            table.timerTable tr:hover {
+                background-color: #ddf;
+            }
+
+            tr:nth-child(even) {
+                background-color: #eee;
+            }
+
+            th {
+                background-color: #22a;
+                color: white;
+            }
+        </style>
+    </head>
+    <body id="timerManagement" ng-controller="ThenMoreSettingsController as vm">
+        <h1>Then More timer management</h1>
+        <p>Overview of running timers</p>
+
+        <table class="timerTable" st-table="timers"> 
+            <thead>
+                <tr>
+                    <th>Timer Name</th>
+                    <th>Time remaining</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr st-select-row="row" ng-repeat="timer in timers" ng-include="getTemplate(timer)"></tr>
+            </tbody>
+        </table>
+
+        <script type="text/ng-template" id="display">
+            <td class="name">{{ timer.device.name }}</td>
+            <td class="remaining">{{ remainingInSeconds(timer.offTime) }}s</td>
+            <td><button type="button" ng-click="cancelTimer(timer.device.id)" class="btn">Cancel Timer</button></td>
+        </script>
+
+        <script type="text/javascript">
+            this.timers = [];
+
+            function onHomeyReady( Homey ){
+                // Tell Homey we're ready to be displayed
+                Homey.ready();
+
+                var scope = angular.element(document.getElementById('timerManagement')).scope();
+                scope.initHomey(Homey);
+            }
+        </script>
+
+    </body>
+</html>
