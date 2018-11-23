@@ -1,10 +1,10 @@
 <!doctype html>
-<html ng-app="ThenMoreApp">
+<html ng-app="TimerApp">
     <head>
         <script type="text/javascript" src="/homey.js" data-origin="settings"></script>
         <script type="text/javascript" src="/manager/webserver/assets/js/angular.js"></script>
         <script type="text/javascript" src="smart-table.min.js"></script>
-        <script type="text/javascript" src="thenMoreController.js"></script>
+        <script type="text/javascript" src="timerController.js"></script>
 
         <style>
             table.timerTable {
@@ -35,10 +35,10 @@
             }
         </style>
     </head>
-    <body id="timerManagement" ng-controller="ThenMoreSettingsController as vm">
-        <h1>Then More timer management</h1>
-        <p>Overview of running timers</p>
+    <body id="timerManagement" ng-controller="TimerSettingsController as vm">
+        <h1>Timer management</h1>
 
+        <p>Overview of running timers</p>
         <table class="timerTable" st-table="timers"> 
             <thead>
                 <tr>

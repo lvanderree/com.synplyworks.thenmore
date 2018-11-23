@@ -1,5 +1,5 @@
-angular.module('ThenMoreApp',['smart-table'])
-    .controller('ThenMoreSettingsController', function($scope, $timeout) {
+angular.module('TimerApp',['smart-table'])
+    .controller('TimerSettingsController', function($scope, $timeout) {
         var homey;
         $scope.timers = [];
 

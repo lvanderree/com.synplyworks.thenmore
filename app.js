@@ -3,10 +3,10 @@
 const Homey = require('homey');
 const { HomeyAPI  } = require('athom-api')
 
-class ThenMoreApp extends Homey.App {
+class TimerApp extends Homey.App {
 	
 	onInit() {
-		this.log('ThenMore App is initializing...')
+		this.log('Timer App is initializing...')
 
 		// remember timeoutIds per device
 		this.timers = [];
@@ -26,7 +26,7 @@ class ThenMoreApp extends Homey.App {
 			
 		this.initFlowCards()
 
-		this.log('ThenMore App is running...')
+		this.log('Timer App is running...')
 	}
 
 	initFlowCards() {
@@ -300,4 +300,4 @@ class ThenMoreApp extends Homey.App {
 
 }
 
-module.exports = ThenMoreApp;
+module.exports = TimerApp;
