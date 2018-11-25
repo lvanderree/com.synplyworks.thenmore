@@ -49,6 +49,10 @@ angular.module('TimerApp',['smart-table'])
             });
         }
 
+        $scope.showDetails  = function(timer) {
+            $scope.detail = timer;
+        }
+
         $scope.getTemplate = function(timer) {
             return 'display';
             //TODO: return 'edit';

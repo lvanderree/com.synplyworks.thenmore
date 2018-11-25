@@ -33,6 +33,21 @@
                 background-color: #22a;
                 color: white;
             }
+
+            dl.timerDetails {
+                margin-top: 20px;
+                padding: 5px;
+                border: 1px solid #22a;
+                display: inline-block;
+            }
+
+            dl.timerDetails dt {
+                font-weight: bold;
+            }
+            dl.timerDetails dd {
+                margin-left: 20px;
+            }
+
         </style>
     </head>
     <body id="timerManagement" ng-controller="TimerSettingsController as vm">
@@ -51,24 +66,40 @@
                 <tr st-select-row="row" ng-repeat="timer in timers" ng-include="getTemplate(timer)"></tr>
             </tbody>
         </table>
-
+        
         <script type="text/ng-template" id="display">
             <td class="name">{{ timer.device.name }}</td>
             <td class="remaining">{{ remainingInSeconds(timer.offTime) }}s</td>
-            <td><button type="button" ng-click="cancelTimer(timer.device.id)" class="btn">Cancel Timer</button></td>
+            <td>
+                <button type="button" ng-click="showDetails(timer)" class="btn">Show Details</button>
+                <button type="button" ng-click="cancelTimer(timer.device.id)" class="btn">Cancel Timer</button>
+            </td>
         </script>
 
+        <dl ng-hide="detail == null" class="timerDetails">
+            <dt>Device Id</lh>
+                <dd>{{ detail.device.id }}</dd>
+            <dt>Device Name</lh>
+                <dd>{{ detail.device.name }}</dd>
+            <dt>Altered Device Capability</lh>
+                <dd>{{ detail.capability }}</dd>
+            <dt>Current Device Value</lh>
+                <dd>{{ detail.value }}</dd>
+            <dt>Current Device Old Value</lh>
+                <dd>{{ detail.oldValue }}</dd>
+        </dl>
+        
         <script type="text/javascript">
             this.timers = [];
-
+            
             function onHomeyReady( Homey ){
                 // Tell Homey we're ready to be displayed
                 Homey.ready();
-
+                
                 var scope = angular.element(document.getElementById('timerManagement')).scope();
                 scope.initHomey(Homey);
             }
-        </script>
+            </script>
 
-    </body>
+</body>
 </html>

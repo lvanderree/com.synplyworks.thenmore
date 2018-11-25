@@ -22,6 +22,9 @@ Feel free to add multiple Timer-cards in the same flow, or select the same devic
 ## Known issues
 * None so far
 
+## Version 0.4.1 β
+added details view on a timer in the settings page
+
 ## Version 0.4.0 β
 added settings page, to see and cancel running timers
 

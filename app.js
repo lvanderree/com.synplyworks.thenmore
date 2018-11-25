@@ -180,9 +180,9 @@ class TimerApp extends Homey.App {
 			}.bind(this, device, action.capability, oldValue), timeOn * 1000);
 			
 			// remember reference of timer for this device and when it will end
-			this.timers[device.id] = {id: timeoudId, device: device, offTime: new Date().getTime() + timeOn * 1000};
+			this.timers[device.id] = {id: timeoudId, device: device, offTime: new Date().getTime() + timeOn * 1000, capability: action.capability, value: action.value, oldValue: oldValue};
 			// tell the world the timer is (re)started
-			Homey.ManagerApi.realtime('timer_started', {timers: this.exportTimers(), device: device, capability: action.capability, value: action.value});
+			Homey.ManagerApi.realtime('timer_started', {timers: this.exportTimers(), device: device, capability: action.capability, value: action.value, oldValue: oldValue});
 		}
 
 		return Promise.resolve(true)
