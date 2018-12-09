@@ -138,6 +138,8 @@ class TimerApp extends Homey.App {
 		const api = await this.getApi();
 		let oldValue = null;
 
+		let apiDevice = await api.devices.getDevice({id: device.id});
+
 		// run script when...
 		if (
 			// ... ignoring current on-state
@@ -148,7 +150,7 @@ class TimerApp extends Homey.App {
 				((overruleLongerTimeouts == "yes") || (new Date().getTime() + timeOn * 1000 > this.timers[device.id].offTime))
 			) ||
 			// or when device is off
-			(await api.devices.getDeviceCapabilityState({id: device.id, capability: 'onoff'}) == false)
+			(apiDevice.capabilitiesObj['onoff'].value == false)
 		) {
 			// first check if there is a reference for a running timer for this device
 			if (this.isTimerRunning(device)) {
@@ -157,11 +159,11 @@ class TimerApp extends Homey.App {
 				// if not already running, turn device on (else leaf it as it is)
 				this.log(`Turn ${device.id} on`);
 				// if restore is set to on, and the device is currently on, remember current value
-				if (restore == "yes" && await api.devices.getDeviceCapabilityState({id: device.id, capability: 'onoff'})) {
+				if (restore == "yes" && apiDevice.capabilitiesObj['onoff']) {
 					this.log(`remember state for ${device.id} (since on and restore on)`);
-					oldValue = await api.devices.getDeviceCapabilityState({id: device.id, capability: action.capability});
+					oldValue = apiDevice.capabilitiesObj[action.capability];
 				}
-				await api.devices.setDeviceCapabilityState({id: device.id, capability: action.capability, value: action.value, timeOn: timeOn});
+				await api.devices.setCapabilityValue({deviceId: device.id, capabilityId: action.capability, value: action.value})
 			}
 			
 			// (re)set timeout
@@ -224,7 +226,7 @@ class TimerApp extends Homey.App {
 		this.log(`set device ${device.id} - ${capability} to ${value}!!` );
 
 		const api = await this.getApi();
-		await api.devices.setDeviceCapabilityState({id: device.id, capability: capability, value: value});
+		await api.devices.setCapabilityValue({deviceId: device.id, capabilityId: capability, value: value})
 	}
 		
 	// Get API control function
@@ -268,8 +270,8 @@ class TimerApp extends Homey.App {
 		if (!this.cache.onOffDevices)	{ 
 			this.cache.onOffDevices = (await this.getAllDevices()).filter(device => {
 				return (
-					'onoff' in device.capabilities &&
-					device.capabilities.onoff.setable
+					'onoff' in device.capabilitiesObj &&
+					device.capabilitiesObj.onoff.setable
 				)
 			});
 
@@ -287,8 +289,8 @@ class TimerApp extends Homey.App {
 		if (!this.cache.dimDevices)	{ 
 			this.cache.dimDevices = (await this.getAllDevices()).filter(device => {
 				return (
-					'dim' in device.capabilities &&
-					device.capabilities.dim.setable
+					'dim' in device.capabilitiesObj &&
+					device.capabilitiesObj.dim.setable
 				)
 			});
 			
