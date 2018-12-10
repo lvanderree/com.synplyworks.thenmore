@@ -11,8 +11,8 @@
     "homey:manager:api"
   ],
   "category": ["tools"],
-  "version": "0.4.2",
-  "compatibility": ">=1.5.0",
+  "version": "0.5.0",
+  "compatibility": ">=2.0.0",
   "author": {
     "name": "Leon Ree",
     "email": "leon@synplyworks.com"

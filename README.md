@@ -20,12 +20,12 @@ Feel free to add multiple Timer-cards in the same flow, or select the same devic
 * Add functionality to handle external triggers that turned off devices
 
 ## Known issues
-* None so far
+* Version 0.4.2 does not run on Homey V1.5. This compatibility issue is not defined in the package.json so 0.4.2 is revoked, and replaced by 0.5.0 
 
-## Version 0.4.2 β
-changed api call to change device state, for v2 compatiblity 
+## Version 0.5.0 β
+Homey V2 compatibility: changed api call to change device state
 
-## Version 0.4.1 β
+## Version 0.4.1 
 added details view on a timer in the settings page
 
 ## Version 0.4.0 β
