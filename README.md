@@ -22,7 +22,7 @@ Feel free to add multiple Timer-cards in the same flow, or select the same devic
 ## Known issues
 * None so far
 
-## Version 0.4.1 β
+## Version 0.4.1
 added details view on a timer in the settings page
 
 ## Version 0.4.0 β
