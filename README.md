@@ -22,7 +22,10 @@ Feel free to add multiple Timer-cards in the same flow, or select the same devic
 ## Known issues
 * None so far
 
-## Version 0.4.1
+## Version 0.4.3
+Promoted 0.4.1 as stable, renamed as 0.4.3 (revoked 0.4.2 which is not compatible with Homey V2)
+
+## Version 0.4.1 β
 added details view on a timer in the settings page
 
 ## Version 0.4.0 β
