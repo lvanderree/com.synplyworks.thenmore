@@ -7,26 +7,34 @@ class TimerApp extends Homey.App {
 	
 	onInit() {
 		this.log('Timer App is initializing...')
-
 		// remember timeoutIds per device
 		this.timers = [];
+		this.resetCache();
 
-		this.cache = {}
-		// invalidate cache when devices are added/removed
+		// invalidate cache when devices are added/removed/updated
 		this.getApi().then(api => {
-			api.devices.on('device.create', async(id) => {
-				await console.log('New device added, reset cache!')
-				this.cache = {}
+			api.devices.on('device.create', device => {
+				console.log('New device added');
+				this.resetCache();
 			})
-			api.devices.on('device.delete', async(id) => {
-				await console.log('Device deleted, reset cache!')
-				this.cache = {}
+			api.devices.on('device.delete', device => {
+				console.log('Device deleted');
+				this.resetCache();
+			})
+			api.devices.on('device.update', device => {
+				console.log(`Device '${device.name}' updated`)
+				this.resetCache();
 			})
 		})
 			
 		this.initFlowCards()
 
 		this.log('Timer App is running...')
+	}
+
+	resetCache() {
+		console.log('reset cache!');
+		this.cache = {};
 	}
 
 	initFlowCards() {
@@ -135,10 +143,10 @@ class TimerApp extends Homey.App {
 
 	async runScript(device, action, timeOn, ignoreWhenOn, overruleLongerTimeouts, restore = "no") {
 
-		const api = await this.getApi();
 		let oldValue = null;
-
-		let apiDevice = await api.devices.getDevice({id: device.id});
+		let onOffCapabilityInstance = null;
+		const api = await this.getApi();
+		const apiDevice = await api.devices.getDevice({id: device.id});
 
 		// run script when...
 		if (
@@ -154,26 +162,40 @@ class TimerApp extends Homey.App {
 		) {
 			// first check if there is a reference for a running timer for this device
 			if (this.isTimerRunning(device)) {
-				this.cancelTimer(device)
+				this.cancelTimer(device);
+				onOffCapabilityInstance = this.timers[device.id].onOffCapabilityInstance; // restore listener instance
 			} else {
 				// if not already running, turn device on (else leaf it as it is)
 				this.log(`Turn ${device.id} on`);
 				// if restore is set to on, and the device is currently on, remember current value
 				if (restore == "yes" && apiDevice.capabilitiesObj['onoff']) {
-					this.log(`remember state for ${device.id} (since on and restore on)`);
 					oldValue = apiDevice.capabilitiesObj[action.capability];
+					this.log(`remember state for ${device.id} (since on and restore on) oldValue ${oldValue}`);
 				}
+				// turn device on, according to chosen action-card/capability
 				await api.devices.setCapabilityValue({deviceId: device.id, capabilityId: action.capability, value: action.value})
+
+				// register listener to clean-up timer when off-state triggered
+				onOffCapabilityInstance = apiDevice.makeCapabilityInstance('onoff', function(device, state) {
+					if (state == false) {
+						console.log(`Device ${device.id} turned off`);
+						this.cancelTimer(device);
+					}
+				 }.bind(this, device));
 			}
 			
 			// (re)set timeout
-			let timeoudId = setTimeout(function (device, capability, oldValue) {
+			let timeoudId = setTimeout(function (device, capabilityId, oldValue) {
 				this.log(`Timeout ${device.id}`);
 
+				// clean up listener for off-state
+				this.timers[device.id].onOffCapabilityInstance.destroy();
+
+				// turn device off, or restore to previous state
 				if (!oldValue) {
-					this.turnOff(device);
+					this.setDeviceCapabilityState(device, 'onoff', false)
 				} else {
-					this.setDeviceCapabilityState(device, capability, oldValue)
+					this.setDeviceCapabilityState(device, capabilityId, oldValue)
 				}
 				
 				// remove reference of timer for this device
@@ -182,7 +204,15 @@ class TimerApp extends Homey.App {
 			}.bind(this, device, action.capability, oldValue), timeOn * 1000);
 			
 			// remember reference of timer for this device and when it will end
-			this.timers[device.id] = {id: timeoudId, device: device, offTime: new Date().getTime() + timeOn * 1000, capability: action.capability, value: action.value, oldValue: oldValue};
+			this.timers[device.id] = {
+				id: timeoudId,
+				device: device,
+				offTime: new Date().getTime() + timeOn * 1000,
+				capability: action.capability,
+				value: action.value,
+				oldValue: oldValue,
+				onOffCapabilityInstance: onOffCapabilityInstance
+			};
 			// tell the world the timer is (re)started
 			Homey.ManagerApi.realtime('timer_started', {timers: this.exportTimers(), device: device, capability: action.capability, value: action.value, oldValue: oldValue});
 		}
@@ -208,6 +238,10 @@ class TimerApp extends Homey.App {
 			// if timer is running cancel timer and remove reference
 			clearTimeout(this.timers[device.id].id);
 			this.log(`Cancelled timer for device ${device.id}`);
+
+			// clean up listener for off-state
+			this.timers[device.id].onOffCapabilityInstance.destroy();
+
 			delete this.timers[device.id];
 
 			Homey.ManagerApi.realtime('timer_deleted',  { timers: this.exportTimers(), device: device });
@@ -216,17 +250,12 @@ class TimerApp extends Homey.App {
 		return Promise.resolve(true)
 	}
 
-	// turn of a device
-	turnOff(device) {
-		this.setDeviceCapabilityState(device, 'onoff', false)
-	}
-
 	// set a device to a certain state
-	async setDeviceCapabilityState(device, capability, value) {
-		this.log(`set device ${device.id} - ${capability} to ${value}!!` );
+	async setDeviceCapabilityState(device, capabilityId, value) {
+		this.log(`set device ${device.id} - ${capabilityId} to ${value}!!` );
 
 		const api = await this.getApi();
-		await api.devices.setCapabilityValue({deviceId: device.id, capabilityId: capability, value: value})
+		await api.devices.setCapabilityValue({deviceId: device.id, capabilityId: capabilityId, value: value})
 	}
 		
 	// Get API control function

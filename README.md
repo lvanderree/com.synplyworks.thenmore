@@ -22,6 +22,9 @@ Feel free to add multiple Timer-cards in the same flow, or select the same devic
 ## Known issues
 * Version 0.4.2 does not run on Homey V1.5. This compatibility issue is not defined in the package.json so 0.4.2 is revoked, and replaced by 0.5.0 
 
+## Version 0.6.0 β
+Homey V2: cancel timer when light turned off manually, handle name changes of devices
+
 ## Version 0.5.0 β
 Homey V2 compatibility: changed api call to change device state
 
