@@ -17,7 +17,7 @@ When the flow (or another flow with the same device entered in the Timer card) i
 Feel free to add multiple Timer-cards in the same flow, or select the same device in more than one flow via the Timer-cards.
 
 ## Todo
-* Add functionality to handle external triggers that turned off devices
+* Find a away to handle motion started/ended triggers better, since with continious motion, the timer will end sooner than (maybe even before) the last motion.
 
 ## Known issues
 * Version 0.4.2 does not run on Homey V1.5. This compatibility issue is not defined in the package.json so 0.4.2 is revoked, and replaced by 0.5.0 
