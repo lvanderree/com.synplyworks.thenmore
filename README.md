@@ -16,6 +16,8 @@ When the flow (or another flow with the same device entered in the Timer card) i
 
 Feel free to add multiple Timer-cards in the same flow, or select the same device in more than one flow via the Timer-cards.
 
+For more info, see: https://community.athom.com/t/timer-v0-4-3-stable-homey-v1-5-0-6-1-beta-homey-v2-fka-then-more-add-timers-to-temporarily-turn-on-devices/3722
+
 ## Todo
 * Find a away to handle motion started/ended triggers better, since with continious motion, the timer will end sooner than (maybe even before) the last motion.
 
