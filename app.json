@@ -28,8 +28,8 @@
       {
         "id": "then_more_on_off",
         "title": {
-          "en": "Timer enabled",
-          "nl": "Timer ingeschakeld"
+          "en": "Timer on/off",
+          "nl": "Timer aan/uit"
         },
         "hint": {
           "en": "With this action you can keep your device enabled for some time",
@@ -37,8 +37,9 @@
         },
         "args": [
           {
+            "type": "autocomplete",
             "name": "device",
-            "type": "autocomplete"
+            "placeholder": { "en": "Which on/off capable device", "nl": "Welk apparaat dat aan/uit te zetten is" }
           },
           {
             "name": "time_on",
@@ -67,8 +68,8 @@
       {
         "id": "then_more_dim",
         "title": {
-          "en": "Timer enabled Dim",
-          "nl": "Timer ingeschakeld Dim"
+          "en": "Timer dim",
+          "nl": "Timer dim"
         },
         "hint": {
           "en": "With this action you can keep your dimable device enabled for some time",
@@ -77,7 +78,8 @@
         "args": [
           {
             "name": "device",
-            "type": "autocomplete"
+            "type": "autocomplete",
+            "placeholder": { "en": "Which dimable device", "nl": "Welk apparaat dat dimbaar is" }
           },
           {
             "name": "brightness_level",

@@ -3,44 +3,81 @@
 const Homey = require('homey');
 const { HomeyAPI  } = require('athom-api')
 
+const DEBUG = process.env.DEBUG === '1';
+
 class TimerApp extends Homey.App {
 	
 	onInit() {
+		this.log(`${ this.id } is running...(debug mode ${ DEBUG ? 'on' : 'off' })`);
+        if (DEBUG) {
+			require('inspector').open(9229, '0.0.0.0');
+        }
+		
+		
 		this.log('Timer App is initializing...')
 		// remember timeoutIds per device
 		this.timers = [];
 		this.resetCache();
 
-		// invalidate cache when devices are added/removed/updated
-		this.getApi().then(api => {
-			api.devices.on('device.create', device => {
-				console.log('New device added');
-				this.resetCache();
-			})
-			api.devices.on('device.delete', device => {
-				console.log('Device deleted');
-				this.resetCache();
-			})
-			api.devices.on('device.update', device => {
-				console.log(`Device '${device.name}' updated`)
-				this.resetCache();
-			})
-		})
-			
 		this.initFlowCards()
 
 		this.log('Timer App is running...')
 	}
 
 	resetCache() {
-		console.log('reset cache!');
+		this.log('reset cache!');
 		this.cache = {};
+
+		// invalidate cache when devices are added/removed/updated
+		this.getApi().then(api => {
+			api.devices.destroy();
+
+			api.devices.on('device.create', device => {
+				this.log(`New device '${device.name}' added`);
+				this.resetCache();
+			})
+			api.devices.on('device.delete', device => {
+				this.log(`Device '${device.name}' deleted`);
+				this.resetCache();
+			})
+			api.devices.on('device.update', device => {
+				this.log(`Device '${device.name}' updated`)
+				this.resetCache();
+			})
+		})
 	}
 
 	initFlowCards() {
+		new Homey.FlowCardAction('then_more_on_off')
+		.register()
+		.registerRunListener((args, state) => {
+			return this.runScript( 
+				args.device, 
+				{ 'capability': 'onoff', 'value': true },
+				args.time_on,
+				args.ignore_when_on,
+				args.overrule_longer_timeouts
+			);
+		})
+		.getArgument('device')
+			.registerAutocompleteListener( (query, args) => {
+				return this.getOnOffDevices().then( onOffDevices => {
+					// filter devices that have a matching name, or zone
+					let filteredResults = onOffDevices.filter( device => {
+						return (
+							device.name.toLowerCase().indexOf(query.toLowerCase()) > -1
+						) || ( 
+							device.zone.name.toLowerCase().indexOf(query.toLowerCase()) > -1
+						)
+					})
+
+					return Promise.resolve(filteredResults);
+				})
+			})
+		
 		new Homey.FlowCardAction('then_more_dim')
 			.register()
-			.registerRunListener( args => {
+			.registerRunListener((args, state) => {
 				return this.runScript( 
 					args.device, 
 					{ 'capability': 'dim', 'value': args.brightness_level },
@@ -52,8 +89,9 @@ class TimerApp extends Homey.App {
 			})
 			// TODO: DRY registerAutocompleteListener
 			.getArgument('device')
-				.registerAutocompleteListener( (query, args) => {
+				.registerAutocompleteListener((query, args) => {
 					return this.getDimDevices().then( dimDevices => {
+						// filter devices that have a matching name, or zone
 						let filteredResults = dimDevices.filter( device => {
 							return (
 								device.name.toLowerCase().indexOf( query.toLowerCase() ) > -1
@@ -66,36 +104,9 @@ class TimerApp extends Homey.App {
 					})
 				})
 
-
-		new Homey.FlowCardAction('then_more_on_off')
-			.register()
-			.registerRunListener( args => {
-				return this.runScript( 
-					args.device, 
-					{ 'capability': 'onoff', 'value': true },
-					args.time_on,
-					args.ignore_when_on,
-					args.overrule_longer_timeouts
-				);
-			})
-			.getArgument('device')
-				.registerAutocompleteListener( (query, args) => {
-					return this.getOnOffDevices().then( onOffDevices => {
-						let filteredResults = onOffDevices.filter( device => {
-							return (
-								device.name.toLowerCase().indexOf(query.toLowerCase()) > -1
-							) || ( 
-								device.zone.name.toLowerCase().indexOf(query.toLowerCase()) > -1
-							)
-						})
-
-						return Promise.resolve(filteredResults);
-					})
-				})
-
 		new Homey.FlowCardAction('cancel_timer')
 			.register()
-			.registerRunListener( args => {
+			.registerRunListener((args, state) => {
 				return this.cancelTimer( 
 					args.device, 
 				);
@@ -146,6 +157,7 @@ class TimerApp extends Homey.App {
 		let oldValue = null;
 		let onOffCapabilityInstance = null;
 		const api = await this.getApi();
+		this.resetCache(); // reset cache (of athom API), to get the current onoff value (apparantly the cache of the web api can be out of sync)
 		const apiDevice = await api.devices.getDevice({id: device.id});
 
 		// run script when...
@@ -162,8 +174,8 @@ class TimerApp extends Homey.App {
 		) {
 			// first check if there is a reference for a running timer for this device
 			if (this.isTimerRunning(device)) {
-				this.cancelTimer(device);
 				onOffCapabilityInstance = this.timers[device.id].onOffCapabilityInstance; // restore listener instance
+				this.cancelTimer(device);
 			} else {
 				// if not already running, turn device on (else leaf it as it is)
 				this.log(`Turn ${device.id} on`);
@@ -178,10 +190,10 @@ class TimerApp extends Homey.App {
 				// register listener to clean-up timer when off-state triggered
 				onOffCapabilityInstance = apiDevice.makeCapabilityInstance('onoff', function(device, state) {
 					if (state == false) {
-						console.log(`Device ${device.id} turned off`);
+						this.log(`Device ${device.id} turned off`);
 						this.cancelTimer(device);
 					}
-				 }.bind(this, device));
+				}.bind(this, device));
 			}
 			
 			// (re)set timeout
@@ -299,6 +311,7 @@ class TimerApp extends Homey.App {
 		if (!this.cache.onOffDevices)	{ 
 			this.cache.onOffDevices = (await this.getAllDevices()).filter(device => {
 				return (
+					device.capabilitiesObj !== null &&
 					'onoff' in device.capabilitiesObj &&
 					device.capabilitiesObj.onoff.setable
 				)
@@ -318,6 +331,7 @@ class TimerApp extends Homey.App {
 		if (!this.cache.dimDevices)	{ 
 			this.cache.dimDevices = (await this.getAllDevices()).filter(device => {
 				return (
+					device.capabilitiesObj !== null &&
 					'dim' in device.capabilitiesObj &&
 					device.capabilitiesObj.dim.setable
 				)
