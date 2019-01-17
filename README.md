@@ -24,6 +24,13 @@ For more info, see: https://community.athom.com/t/timer-v0-4-3-stable-homey-v1-5
 ## Known issues
 * Version 0.4.2 does not run on Homey V1.5. This compatibility issue is not defined in the package.json so 0.4.2 is revoked, and replaced by 0.5.0 
 
+## Version 0.6.2 β
+Homey V2: 
+    - fixed selecting devices
+    - fixed missing reference to event listener, making the app crash
+    - extra cache clear of api, to force update device state
+    - updated athom api
+
 ## Version 0.6.1 β
 Homey V2: fixed settings page could contain timers that where expired
 

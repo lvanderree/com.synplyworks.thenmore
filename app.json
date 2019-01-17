@@ -10,8 +10,10 @@
   "permissions": [
     "homey:manager:api"
   ],
-  "category": ["tools"],
-  "version": "0.6.1",
+  "category": [
+    "tools"
+  ],
+  "version": "0.6.2",
   "compatibility": ">=2.0.0",
   "author": {
     "name": "Leon Ree",
@@ -21,9 +23,7 @@
     "large": "/assets/images/large.png",
     "small": "/assets/images/small.png"
   },
-
   "flow": {
-
     "actions": [
       {
         "id": "then_more_on_off",
@@ -39,28 +39,58 @@
           {
             "type": "autocomplete",
             "name": "device",
-            "placeholder": { "en": "Which on/off capable device", "nl": "Welk apparaat dat aan/uit te zetten is" }
+            "placeholder": {
+              "en": "Which on/off capable device",
+              "nl": "Welk apparaat dat aan/uit te zetten is"
+            }
           },
           {
             "name": "time_on",
             "type": "number",
             "min": 1,
-            "placeholder": { "en": "Time (in s) to keep the device on", "nl": "Tijd (in s) om het apparaat aan te houden" }
+            "placeholder": {
+              "en": "Time (in s) to keep the device on",
+              "nl": "Tijd (in s) om het apparaat aan te houden"
+            }
           },
           {
             "name": "ignore_when_on",
             "type": "dropdown",
-            "values": [ 
-              { "id": "yes", "label": { "en": "Ignore when device is already on", "nl": "Negeer als het apparaat al aan staat" } },
-              { "id": "no", "label": { "en": "Control it anyway", "nl": "Beheers het toch" } } 
+            "values": [
+              {
+                "id": "yes",
+                "label": {
+                  "en": "Ignore when device is already on",
+                  "nl": "Negeer als het apparaat al aan staat"
+                }
+              },
+              {
+                "id": "no",
+                "label": {
+                  "en": "Control it anyway",
+                  "nl": "Beheers het toch"
+                }
+              }
             ]
           },
           {
             "name": "overrule_longer_timeouts",
             "type": "dropdown",
-            "values": [ 
-              { "id": "no", "label": { "en": "Keep longer timeouts", "nl": "Langere timeouts behouden" } }, 
-              { "id": "yes", "label": { "en": "Shorter timeouts win", "nl": "Kortere timeouts worden toch gezet" } }
+            "values": [
+              {
+                "id": "no",
+                "label": {
+                  "en": "Keep longer timeouts",
+                  "nl": "Langere timeouts behouden"
+                }
+              },
+              {
+                "id": "yes",
+                "label": {
+                  "en": "Shorter timeouts win",
+                  "nl": "Kortere timeouts worden toch gezet"
+                }
+              }
             ]
           }
         ]
@@ -79,7 +109,10 @@
           {
             "name": "device",
             "type": "autocomplete",
-            "placeholder": { "en": "Which dimable device", "nl": "Welk apparaat dat dimbaar is" }
+            "placeholder": {
+              "en": "Which dimable device",
+              "nl": "Welk apparaat dat dimbaar is"
+            }
           },
           {
             "name": "brightness_level",
@@ -94,30 +127,69 @@
             "name": "time_on",
             "type": "number",
             "min": 1,
-            "placeholder": { "en": "Time (in s) to keep the device on", "nl": "Tijd (in s) om het apparaat aan te houden" }
+            "placeholder": {
+              "en": "Time (in s) to keep the device on",
+              "nl": "Tijd (in s) om het apparaat aan te houden"
+            }
           },
           {
             "name": "ignore_when_on",
             "type": "dropdown",
-            "values": [ 
-              { "id": "yes", "label": { "en": "Ignore when device is already on", "nl": "Negeer als het apparaat al aan staat" } },
-              { "id": "no", "label": { "en": "Control it anyway", "nl": "Beheers het toch" } } 
+            "values": [
+              {
+                "id": "yes",
+                "label": {
+                  "en": "Ignore when device is already on",
+                  "nl": "Negeer als het apparaat al aan staat"
+                }
+              },
+              {
+                "id": "no",
+                "label": {
+                  "en": "Control it anyway",
+                  "nl": "Beheers het toch"
+                }
+              }
             ]
           },
           {
             "name": "overrule_longer_timeouts",
             "type": "dropdown",
-            "values": [ 
-              { "id": "no", "label": { "en": "Keep running timer, if its longer than this time", "nl": "Behoud lopende timers, wanneer deze nog langer duren dan deze tijd" } }, 
-              { "id": "yes", "label": { "en": "Set this timer, even if its shorter than time remaining when there is a running timer", "nl": "Zet deze timer, zelfs als deze timer korter is dan een lopende timer" } }
+            "values": [
+              {
+                "id": "no",
+                "label": {
+                  "en": "Keep running timer, if its longer than this time",
+                  "nl": "Behoud lopende timers, wanneer deze nog langer duren dan deze tijd"
+                }
+              },
+              {
+                "id": "yes",
+                "label": {
+                  "en": "Set this timer, even if its shorter than time remaining when there is a running timer",
+                  "nl": "Zet deze timer, zelfs als deze timer korter is dan een lopende timer"
+                }
+              }
             ]
           },
           {
             "name": "restore",
             "type": "dropdown",
-            "values": [ 
-              { "id": "yes", "label": { "en": "Restore to previous state (if controlling anyway)", "nl": "Herstel naar vorige staat (indien toch beheerst)" } },
-              { "id": "no", "label": { "en": "Turn off after timeout (if controlling anyway)", "nl": "Zet apparaat uit na timeout (indien toch beheerst)" } } 
+            "values": [
+              {
+                "id": "yes",
+                "label": {
+                  "en": "Restore to previous state (if controlling anyway)",
+                  "nl": "Herstel naar vorige staat (indien toch beheerst)"
+                }
+              },
+              {
+                "id": "no",
+                "label": {
+                  "en": "Turn off after timeout (if controlling anyway)",
+                  "nl": "Zet apparaat uit na timeout (indien toch beheerst)"
+                }
+              }
             ]
           }
         ]
@@ -142,19 +214,18 @@
     ],
     "conditions": [
       {
-          "id": "is_timer_running",
-          "title": {
-              "en": "Timer !{{is|isn't}} running",
-              "nl": "Timer loopt !{{|niet}}"
-          },
-          "args": [
-            {
-              "name": "device",
-              "type": "autocomplete"
-            }
-          ]
+        "id": "is_timer_running",
+        "title": {
+          "en": "Timer !{{is|isn't}} running",
+          "nl": "Timer loopt !{{|niet}}"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "autocomplete"
+          }
+        ]
       }
     ]
   }
-
 }
