@@ -25,13 +25,18 @@ For more info, see: https://community.athom.com/t/timer-v0-4-3-stable-homey-v1-5
 ## Known issues
 * Version 0.4.2 does not run on Homey V1.5. This compatibility issue is not defined in the package.json so 0.4.2 is revoked, and replaced by 0.5.0 
 
+## Version 0.7.1 α
+Homey V2: 
+    - refactored code to be more consistent
+    - Fix retreiving capability value, instead of set
+    - Probably fixed an issue, where old capability values got lost
+    - Handle missing reference to previous timer, by logging warnings
+    - TODO: find out how to get an up to date capability value
+
 ## Version 0.7.0 α
 Homey V2: 
     - Removed instance caching of API results in app
     - Fixed a bug when filtering on devices, while zone name isn't available anymore
-    - TODO: Handle incapable capability
-    - TODO: Handle missing reference to previous timer
-
 
 ## Version 0.6.2 β
 Homey V2: 

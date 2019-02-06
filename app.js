@@ -98,7 +98,7 @@ class TimerApp extends Homey.App {
 		new Homey.FlowCardCondition('is_timer_running')
 			.register()
 			.on('run', ( args, state, callback ) => {
-				if (this.isTimerRunning(args.device)) {
+				if (args.device.id in this.timers) {
 					callback( null, true )
 				}
 				else {
@@ -125,8 +125,10 @@ class TimerApp extends Homey.App {
 		let onOffCapabilityInstance = null;
 		const api = await this.getApi();
 		// TODO: reset cache (of athom API), to get the current onoff value (apparantly the cache of the web api can be out of sync)
+		// TODO: Or is there maybe another way to get a capability
 		const apiDevice = await api.devices.getDevice({id: device.id});
-
+		const timer = this.timers[device.id];
+		
 		// run script when...
 		if (
 			// ... device is off
@@ -135,27 +137,27 @@ class TimerApp extends Homey.App {
 			(ignoreWhenOn == "no") ||
 			// .. or when previously activated by this script AND overrule longer enabled, or new timer is later
 			(
-				device.id in this.timers && 
-				((overruleLongerTimeouts == "yes") || (new Date().getTime() + timeOn * 1000 > this.timers[device.id].offTime))
+				timer && 
+				((overruleLongerTimeouts == "yes") || (new Date().getTime() + timeOn * 1000 > timer.offTime))
 			)
 		) {
 			// first check if there is a reference for a running timer for this device
-			if (this.isTimerRunning(device)) {
+			if (timer) {
 				// timer already running, device already on, but disable running timer
-				onOffCapabilityInstance = this.timers[device.id].onOffCapabilityInstance; // restore listener instance
+				oldValue = timer.oldValue; // restore oldValue
+				onOffCapabilityInstance = timer.onOffCapabilityInstance; // restore listener instance
 				this.cancelTimer(device);
 			} else {
-				// if timer is not already running, turn device on
+				// if timer is not already running, set device to desired on state 
 
-				// if the device is already on, and restore is set to true, remember current value
+				// if restore is set to true and the device is already on, remember current value (as oldValue)
 				if (restore == "yes" && apiDevice.capabilitiesObj['onoff']) {
-					oldValue = apiDevice.capabilitiesObj[action.capability];
+					oldValue = apiDevice.capabilitiesObj[action.capability].value;
 					this.log(`remember state for ${device.name}: ${device.id} (since on and restore on) oldValue ${oldValue}`);
 				}
 
 				// turn device on, according to chosen action-card/capability
-				await api.devices.setCapabilityValue({deviceId: device.id, capabilityId: action.capability, value: action.value})
-				this.log(`Turn ${device.name}: ${device.id} on`);
+				this.setDeviceCapabilityState(device, action.capability, action.value);
 
 				// register listener to clean-up timer when off-state triggered
 				onOffCapabilityInstance = apiDevice.makeCapabilityInstance('onoff', function(device, state) {
@@ -166,23 +168,25 @@ class TimerApp extends Homey.App {
 				}.bind(this, device));
 			}
 			
-			// (re)set timeout
+			// (re)set timeout, with following functionality
 			let timeoudId = setTimeout(function (device, capabilityId, oldValue) {
-				this.log(`Timeout ${device.name}: ${device.id}`);
+				this.log(`Timeout for ${device.name}: ${device.id}`);
 
-				// clean up listener for off-state
-				this.timers[device.id].onOffCapabilityInstance.destroy();
-
-				// turn device off, or restore to previous state
-				if (!oldValue) {
-					this.setDeviceCapabilityState(device, 'onoff', false)
+				const timer = this.timers[device.id];
+				if (timer) 
+				{
+					this.cleanupTimer(device)
+	
+					// turn device off, or restore to previous state
+					if (!oldValue) {
+						this.setDeviceCapabilityState(device, 'onoff', false)
+					} else {
+						this.setDeviceCapabilityState(device, capabilityId, oldValue)
+					}
+					
 				} else {
-					this.setDeviceCapabilityState(device, capabilityId, oldValue)
+					this.log(`WARNING: timer timed out, but no timer for device ${device.name}: ${device.id} found! already fired?`);
 				}
-				
-				// remove reference of timer for this device
-				delete this.timers[device.id];
-				Homey.ManagerApi.realtime('timer_deleted', { timers: this.exportTimers(), device: device });
 			}.bind(this, device, action.capability, oldValue), timeOn * 1000);
 			
 			// remember reference of timer for this device and when it will end
@@ -202,35 +206,33 @@ class TimerApp extends Homey.App {
 		return Promise.resolve(true)
 	}
 
-	isTimerRunning(device) {
-		let hasTimer = device.id in this.timers;
-		
-		if (hasTimer) {
-			this.log(`Timer for device ${device.name}: ${device.id} found` );
-		} else {
-			this.log(`Timer for device ${device.name}: ${device.id} not found` );
-		}
-
-		return hasTimer;
-	}
-
 	cancelTimer(device) {
-		this.log(`Cancel timer for device ${device.name}: ${device.id}`);
-
-		if (device.id in this.timers) {
-			// if timer is running cancel timer and remove reference
-			clearTimeout(this.timers[device.id].id);
+		const timer = this.timers[device.id];
+		// if timer is running cancel timer and remove reference
+		if (timer) {
+			clearTimeout(timer.id);
 			this.log(`Cancelled timer for device ${device.name}: ${device.id}`);
-
-			// clean up listener for off-state
-			this.timers[device.id].onOffCapabilityInstance.destroy();
-
-			delete this.timers[device.id];
-
-			Homey.ManagerApi.realtime('timer_deleted',  { timers: this.exportTimers(), device: device });
+			
+			this.cleanupTimer(device);
+		} else {
+			this.log(`WARNING: No timer to Cancel for device ${device.name}: ${device.id}`);
 		}
 
 		return Promise.resolve(true)
+	}
+
+	cleanupTimer(device) {
+		const timer = this.timers[device.id];
+		if (timer) {
+			// clean up listener for off-state
+			timer.onOffCapabilityInstance.destroy();
+			// remove reference of timer for this device
+			delete this.timers[device.id];
+			// emit event to signal settings page the timer can be removed
+			Homey.ManagerApi.realtime('timer_deleted', { timers: this.exportTimers(), device: device });
+		} else {
+			this.log(`WARNING: No timer to cleanup for device ${device.name}: ${device.id}`);
+		}
 	}
 
 	// set a device to a certain state
@@ -254,6 +256,7 @@ class TimerApp extends Homey.App {
 	exportTimers() {
 		let data = {};
 
+		// clone timers, and remove the timeout-id
 		for (let key in this.timers) {
 			data[key] = Object.assign({}, this.timers[key]);
 			delete data[key].id; // remove timeout id which cannot be exported
