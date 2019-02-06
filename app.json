@@ -1,11 +1,15 @@
 {
   "id": "com.synplyworks.thenmore",
+  "version": "0.7.0",
+  "compatibility": ">=2.0.0",
   "sdk": 2,
   "name": {
-    "en": "Timer"
+    "en": "Timer",
+    "nl": "Timer"
   },
   "description": {
-    "en": "Timer Adds Timer functionality in the Then clause of your flows"
+    "en": "Timer adds Timer functionality in the Then clause of your flows",
+    "nl": "Timer voegt Timer functionaliteit toe in de Dan functie van je flows"
   },
   "permissions": [
     "homey:manager:api"
@@ -13,11 +17,37 @@
   "category": [
     "tools"
   ],
-  "version": "0.6.2",
-  "compatibility": ">=2.0.0",
+  "tags": {
+    "en": [
+      "Timer",
+      "countdown"
+    ],
+    "nl": [
+      "Timer",
+      "zandloper"
+    ]
+  },
   "author": {
     "name": "Leon Ree",
     "email": "leon@synplyworks.com"
+  },
+  "contributors": {
+    "developers": [
+      {
+        "name": "Leon van der Ree",
+        "email": "leon@synplyworks.com"
+      }
+    ]
+  },
+  "contributing": {
+    "donate": {
+      "paypal": {
+        "username": "lvanderree"
+      }
+    }
+  },
+  "bugs": {
+    "url": "https://github.com/lvanderree/com.synplyworks.thenmore/issues"
   },
   "images": {
     "large": "/assets/images/large.png",
@@ -207,7 +237,11 @@
         "args": [
           {
             "name": "device",
-            "type": "autocomplete"
+            "type": "autocomplete",
+            "placeholder": {
+              "en": "The device for which the timer runs",
+              "nl": "Het apparaat waarvoor de timer loopt"
+            }
           }
         ]
       }
@@ -222,7 +256,11 @@
         "args": [
           {
             "name": "device",
-            "type": "autocomplete"
+            "type": "autocomplete",
+            "placeholder": {
+              "en": "The device for which a timer can run",
+              "nl": "Het apparaat waarvoor een timer kan lopen"
+            }
           }
         ]
       }

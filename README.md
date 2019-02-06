@@ -18,11 +18,20 @@ Feel free to add multiple Timer-cards in the same flow, or select the same devic
 
 For more info, see: https://community.athom.com/t/timer-v0-4-3-stable-homey-v1-5-0-6-1-beta-homey-v2-fka-then-more-add-timers-to-temporarily-turn-on-devices/3722
 
+
 ## Todo
 * Find a away to handle motion started/ended triggers better, since with continious motion, the timer will end sooner than (maybe even before) the last motion.
 
 ## Known issues
 * Version 0.4.2 does not run on Homey V1.5. This compatibility issue is not defined in the package.json so 0.4.2 is revoked, and replaced by 0.5.0 
+
+## Version 0.7.0 α
+Homey V2: 
+    - Removed instance caching of API results in app
+    - Fixed a bug when filtering on devices, while zone name isn't available anymore
+    - TODO: Handle incapable capability
+    - TODO: Handle missing reference to previous timer
+
 
 ## Version 0.6.2 β
 Homey V2: 
@@ -60,3 +69,15 @@ added 2 extra cards
 
 ## Version 0.1.0 β
 initial release
+
+
+
+## Final note
+The repository can be found at: https://github.com/lvanderree/com.synplyworks.thenmore
+
+If you like the app, consider a donation to support development :beer: 
+ 
+[![Donate][pp-donate-image]][pp-donate-link]
+
+[pp-donate-link]: https://paypal.me/lvanderree
+[pp-donate-image]: https://img.shields.io/badge/Donate-PayPal-green.svg

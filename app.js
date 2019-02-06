@@ -13,45 +13,20 @@ class TimerApp extends Homey.App {
 			require('inspector').open(9229, '0.0.0.0');
         }
 		
-		
 		this.log('Timer App is initializing...')
+		
 		// remember timeoutIds per device
 		this.timers = [];
-		this.resetCache();
-
 		this.initFlowCards()
 
 		this.log('Timer App is running...')
-	}
-
-	resetCache() {
-		this.log('reset cache!');
-		this.cache = {};
-
-		// invalidate cache when devices are added/removed/updated
-		this.getApi().then(api => {
-			api.devices.destroy();
-
-			api.devices.on('device.create', device => {
-				this.log(`New device '${device.name}' added`);
-				this.resetCache();
-			})
-			api.devices.on('device.delete', device => {
-				this.log(`Device '${device.name}' deleted`);
-				this.resetCache();
-			})
-			api.devices.on('device.update', device => {
-				this.log(`Device '${device.name}' updated`)
-				this.resetCache();
-			})
-		})
 	}
 
 	initFlowCards() {
 		new Homey.FlowCardAction('then_more_on_off')
 		.register()
 		.registerRunListener((args, state) => {
-			return this.runScript( 
+			return this.runScript(
 				args.device, 
 				{ 'capability': 'onoff', 'value': true },
 				args.time_on,
@@ -62,12 +37,10 @@ class TimerApp extends Homey.App {
 		.getArgument('device')
 			.registerAutocompleteListener( (query, args) => {
 				return this.getOnOffDevices().then( onOffDevices => {
-					// filter devices that have a matching name, or zone
+					// filter key that have a matching name
 					let filteredResults = onOffDevices.filter( device => {
 						return (
 							device.name.toLowerCase().indexOf(query.toLowerCase()) > -1
-						) || ( 
-							device.zone.name.toLowerCase().indexOf(query.toLowerCase()) > -1
 						)
 					})
 
@@ -91,12 +64,10 @@ class TimerApp extends Homey.App {
 			.getArgument('device')
 				.registerAutocompleteListener((query, args) => {
 					return this.getDimDevices().then( dimDevices => {
-						// filter devices that have a matching name, or zone
+						// filter devices that have a matching name
 						let filteredResults = dimDevices.filter( device => {
 							return (
 								device.name.toLowerCase().indexOf( query.toLowerCase() ) > -1
-							) || (
-								device.zone.name.toLowerCase().indexOf( query.toLowerCase() ) > -1
 							)
 						})
 
@@ -117,8 +88,6 @@ class TimerApp extends Homey.App {
 						let filteredResults = onOffDevices.filter( device => {
 							return (
 								device.name.toLowerCase().indexOf(query.toLowerCase()) > -1
-							) || ( 
-								device.zone.name.toLowerCase().indexOf(query.toLowerCase()) > -1
 							)
 						})
 
@@ -142,8 +111,6 @@ class TimerApp extends Homey.App {
 						let filteredResults = onOffDevices.filter( device => {
 							return (
 								device.name.toLowerCase().indexOf(query.toLowerCase()) > -1
-							) || ( 
-								device.zone.name.toLowerCase().indexOf(query.toLowerCase()) > -1
 							)
 						})
 
@@ -157,40 +124,43 @@ class TimerApp extends Homey.App {
 		let oldValue = null;
 		let onOffCapabilityInstance = null;
 		const api = await this.getApi();
-		this.resetCache(); // reset cache (of athom API), to get the current onoff value (apparantly the cache of the web api can be out of sync)
+		// TODO: reset cache (of athom API), to get the current onoff value (apparantly the cache of the web api can be out of sync)
 		const apiDevice = await api.devices.getDevice({id: device.id});
 
 		// run script when...
 		if (
-			// ... ignoring current on-state
+			// ... device is off
+			(apiDevice.capabilitiesObj['onoff'].value == false) ||
+			// ... or ignoring current on-state
 			(ignoreWhenOn == "no") ||
-			// .. or when previously activated by this script (and when overrule longer, or new timer is later)
+			// .. or when previously activated by this script AND overrule longer enabled, or new timer is later
 			(
 				device.id in this.timers && 
 				((overruleLongerTimeouts == "yes") || (new Date().getTime() + timeOn * 1000 > this.timers[device.id].offTime))
-			) ||
-			// or when device is off
-			(apiDevice.capabilitiesObj['onoff'].value == false)
+			)
 		) {
 			// first check if there is a reference for a running timer for this device
 			if (this.isTimerRunning(device)) {
+				// timer already running, device already on, but disable running timer
 				onOffCapabilityInstance = this.timers[device.id].onOffCapabilityInstance; // restore listener instance
 				this.cancelTimer(device);
 			} else {
-				// if not already running, turn device on (else leaf it as it is)
-				this.log(`Turn ${device.id} on`);
-				// if restore is set to on, and the device is currently on, remember current value
+				// if timer is not already running, turn device on
+
+				// if the device is already on, and restore is set to true, remember current value
 				if (restore == "yes" && apiDevice.capabilitiesObj['onoff']) {
 					oldValue = apiDevice.capabilitiesObj[action.capability];
-					this.log(`remember state for ${device.id} (since on and restore on) oldValue ${oldValue}`);
+					this.log(`remember state for ${device.name}: ${device.id} (since on and restore on) oldValue ${oldValue}`);
 				}
+
 				// turn device on, according to chosen action-card/capability
 				await api.devices.setCapabilityValue({deviceId: device.id, capabilityId: action.capability, value: action.value})
+				this.log(`Turn ${device.name}: ${device.id} on`);
 
 				// register listener to clean-up timer when off-state triggered
 				onOffCapabilityInstance = apiDevice.makeCapabilityInstance('onoff', function(device, state) {
 					if (state == false) {
-						this.log(`Device ${device.id} turned off`);
+						this.log(`Listener: Device ${device.name}: ${device.id} turned off, disable running timer`);
 						this.cancelTimer(device);
 					}
 				}.bind(this, device));
@@ -198,7 +168,7 @@ class TimerApp extends Homey.App {
 			
 			// (re)set timeout
 			let timeoudId = setTimeout(function (device, capabilityId, oldValue) {
-				this.log(`Timeout ${device.id}`);
+				this.log(`Timeout ${device.name}: ${device.id}`);
 
 				// clean up listener for off-state
 				this.timers[device.id].onOffCapabilityInstance.destroy();
@@ -236,20 +206,21 @@ class TimerApp extends Homey.App {
 		let hasTimer = device.id in this.timers;
 		
 		if (hasTimer) {
-			this.log(`Timer for device ${device.id} found` );
+			this.log(`Timer for device ${device.name}: ${device.id} found` );
 		} else {
-			this.log(`Timer for device ${device.id} not found` );
+			this.log(`Timer for device ${device.name}: ${device.id} not found` );
 		}
+
 		return hasTimer;
 	}
 
 	cancelTimer(device) {
-		this.log(`Cancel timer for device ${device.id}`);
+		this.log(`Cancel timer for device ${device.name}: ${device.id}`);
 
 		if (device.id in this.timers) {
 			// if timer is running cancel timer and remove reference
 			clearTimeout(this.timers[device.id].id);
-			this.log(`Cancelled timer for device ${device.id}`);
+			this.log(`Cancelled timer for device ${device.name}: ${device.id}`);
 
 			// clean up listener for off-state
 			this.timers[device.id].onOffCapabilityInstance.destroy();
@@ -264,7 +235,7 @@ class TimerApp extends Homey.App {
 
 	// set a device to a certain state
 	async setDeviceCapabilityState(device, capabilityId, value) {
-		this.log(`set device ${device.id} - ${capabilityId} to ${value}!!` );
+		this.log(`set device ${device.name}: ${device.id} - ${capabilityId} to ${value}!!` );
 
 		const api = await this.getApi();
 		await api.devices.setCapabilityValue({deviceId: device.id, capabilityId: capabilityId, value: value})
@@ -293,14 +264,9 @@ class TimerApp extends Homey.App {
 
 	// Get all devices function for API
 	async getAllDevices() {
-		if (!this.cache.allDevices) {
-			const api = await this.getApi();
+		const api = await this.getApi();
 
-			this.cache.allDevices = Object.values(await api.devices.getDevices())
-			this.log(`Update ${this.cache.allDevices.length} devices in total in cache`)
-		}
-		
-		return this.cache.allDevices;
+		return Object.values(await api.devices.getDevices());
 	}
 
 	/**
@@ -308,39 +274,27 @@ class TimerApp extends Homey.App {
 	 * and filter all without on/off capability
 	 */
 	async getOnOffDevices() {
-		if (!this.cache.onOffDevices)	{ 
-			this.cache.onOffDevices = (await this.getAllDevices()).filter(device => {
-				return (
-					device.capabilitiesObj !== null &&
-					'onoff' in device.capabilitiesObj &&
-					device.capabilitiesObj.onoff.setable
-				)
-			});
-
-			this.log(`Update ${this.cache.onOffDevices.length} OnOff devices in cache`)
-		}
-
-		return this.cache.onOffDevices;
+		return (await this.getAllDevices()).filter(device => {
+			return (
+				device.capabilitiesObj !== null &&
+				'onoff' in device.capabilitiesObj &&
+				device.capabilitiesObj.onoff.setable
+			)
+		});
 	}
 
 	/**
 	 * load all devices from Homey
-	 * and filter all without on/off capability
+	 * and filter all without dim capability
 	 */
 	async getDimDevices() {
-		if (!this.cache.dimDevices)	{ 
-			this.cache.dimDevices = (await this.getAllDevices()).filter(device => {
-				return (
-					device.capabilitiesObj !== null &&
-					'dim' in device.capabilitiesObj &&
-					device.capabilitiesObj.dim.setable
-				)
-			});
-			
-			this.log(`Update ${this.cache.dimDevices.length} Dimable devices in cache`)
-		}
-
-		return this.cache.dimDevices;
+		return (await this.getAllDevices()).filter(device => {
+			return (
+				device.capabilitiesObj !== null &&
+				'dim' in device.capabilitiesObj &&
+				device.capabilitiesObj.dim.setable
+			)
+		});
 	}
 
 }
