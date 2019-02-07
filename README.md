@@ -25,6 +25,11 @@ For more info, see: https://community.athom.com/t/timer-v0-4-3-stable-homey-v1-5
 ## Known issues
 * Version 0.4.2 does not run on Homey V1.5. This compatibility issue is not defined in the package.json so 0.4.2 is revoked, and replaced by 0.5.0 
 
+## Version 0.7.2 β
+Homey V2: 
+   - updated athom api library, since it caches capability values, without updating them, but unfortunately without improvements
+   - So implemented a dumb cache overwrite myself
+
 ## Version 0.7.1 α
 Homey V2: 
     - refactored code to be more consistent

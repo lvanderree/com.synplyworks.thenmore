@@ -153,7 +153,7 @@ class TimerApp extends Homey.App {
 				// if restore is set to true and the device is already on, remember current value (as oldValue)
 				if (restore == "yes" && apiDevice.capabilitiesObj['onoff']) {
 					oldValue = apiDevice.capabilitiesObj[action.capability].value;
-					this.log(`remember state for ${device.name}: ${device.id} (since on and restore on) oldValue ${oldValue}`);
+					this.log(`remember state for ${device.name} [${device.id}] (since on and restore on) oldValue ${oldValue}`);
 				}
 
 				// turn device on, according to chosen action-card/capability
@@ -162,15 +162,16 @@ class TimerApp extends Homey.App {
 				// register listener to clean-up timer when off-state triggered
 				onOffCapabilityInstance = apiDevice.makeCapabilityInstance('onoff', function (device, state) {
 					if (state == false) {
-						this.log(`Listener: Device ${device.name}: ${device.id} turned off, disable running timer`);
+						this.log(`Listener: Device ${device.name} [${device.id}] turned off, disable running timer`);
 						this.cancelTimer(device);
 					}
 				}.bind(this, device));
 			}
 
 			// (re)set timeout, with following functionality
+			this.log(`set timer for device ${device.name} [${device.id}] to ${timeOn} seconds, oldValue: ${oldValue ? oldValue : false}`);
 			let timeoudId = setTimeout(function (device, capabilityId, oldValue) {
-				this.log(`Timeout for ${device.name}: ${device.id}`);
+				this.log(`Timeout for ${device.name} [${device.id}]`);
 
 				const timer = this.timers[device.id];
 				if (timer) {
@@ -184,7 +185,7 @@ class TimerApp extends Homey.App {
 					}
 
 				} else {
-					this.log(`WARNING: timer timed out, but no timer for device ${device.name}: ${device.id} found! already fired?`);
+					this.log(`WARNING: timer timed out, but no timer for device ${device.name} [${device.id}] found! already fired?`);
 				}
 			}.bind(this, device, action.capability, oldValue), timeOn * 1000);
 
@@ -210,11 +211,11 @@ class TimerApp extends Homey.App {
 		// if timer is running cancel timer and remove reference
 		if (timer) {
 			clearTimeout(timer.id);
-			this.log(`Cancelled timer for device ${device.name}: ${device.id}`);
+			this.log(`Cancelled timer for device ${device.name} [${device.id}]`);
 
 			this.cleanupTimer(device);
 		} else {
-			this.log(`WARNING: No timer to Cancel for device ${device.name}: ${device.id}`);
+			this.log(`WARNING: No timer to Cancel for device ${device.name} [${device.id}]`);
 		}
 
 		return Promise.resolve(true)
@@ -230,16 +231,20 @@ class TimerApp extends Homey.App {
 			// emit event to signal settings page the timer can be removed
 			Homey.ManagerApi.realtime('timer_deleted', { timers: this.exportTimers(), device: device });
 		} else {
-			this.log(`WARNING: No timer to cleanup for device ${device.name}: ${device.id}`);
+			this.log(`WARNING: No timer to cleanup for device ${device.name} [${device.id}]`);
 		}
 	}
 
 	// set a device to a certain state
 	async setDeviceCapabilityState(device, capabilityId, value) {
-		this.log(`set device ${device.name}: ${device.id} - ${capabilityId} to ${value}!!`);
+		this.log(`set device ${device.name} [${device.id}] capability ${capabilityId} to ${value}`);
 
 		const api = await this.getApi();
 		await api.devices.setCapabilityValue({ deviceId: device.id, capabilityId: capabilityId, value: value })
+		
+		// update cache of apiDevice.capabilitiesObj
+		const apiDevice = await api.devices.getDevice({ id: device.id });
+		apiDevice.capabilitiesObj[capabilityId].value = value;
 	}
 
 	// Get API control function
