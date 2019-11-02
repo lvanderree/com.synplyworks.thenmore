@@ -1,7 +1,7 @@
 'use strict';
 
 const Homey = require('homey');
-const { HomeyAPI } = require('athom-api')
+const { HomeyAPI } = require('athom-api');
 
 const DEBUG = process.env.DEBUG === '1';
 
@@ -13,18 +13,19 @@ class TimerApp extends Homey.App {
 			require('inspector').open(9229, '0.0.0.0');
 		}
 
-		this.log('Timer App is initializing...')
+		this.log('Timer App is initializing...');
 
 		// remember timeoutIds per device
 		this.timers = [];
-		this.initFlowCards()
+		this.initFlowCards();
 
-		this.log('Timer App is running...')
+		this.log('Timer App is running...');
 	}
 
 	initFlowCards() {
 		new Homey.FlowCardAction('then_more_on_off')
 			.register()
+			// eslint-disable-next-line no-unused-vars
 			.registerRunListener((args, state) => {
 				return this.runScript(
 					args.device,
@@ -35,21 +36,23 @@ class TimerApp extends Homey.App {
 				);
 			})
 			.getArgument('device')
+			// eslint-disable-next-line no-unused-vars
 			.registerAutocompleteListener((query, args) => {
 				return this.getOnOffDevices().then(onOffDevices => {
 					// filter key that have a matching name
 					let filteredResults = onOffDevices.filter(device => {
 						return (
 							device.name.toLowerCase().indexOf(query.toLowerCase()) > -1
-						)
-					})
+						);
+					});
 
 					return Promise.resolve(filteredResults);
-				})
-			})
+				});
+			});
 
 		new Homey.FlowCardAction('then_more_dim')
 			.register()
+			// eslint-disable-next-line no-unused-vars
 			.registerRunListener((args, state) => {
 				return this.runScript(
 					args.device,
@@ -62,61 +65,65 @@ class TimerApp extends Homey.App {
 			})
 			// TODO: DRY registerAutocompleteListener
 			.getArgument('device')
+			// eslint-disable-next-line no-unused-vars
 			.registerAutocompleteListener((query, args) => {
 				return this.getDimDevices().then(dimDevices => {
 					// filter devices that have a matching name
 					let filteredResults = dimDevices.filter(device => {
 						return (
 							device.name.toLowerCase().indexOf(query.toLowerCase()) > -1
-						)
-					})
+						);
+					});
 
 					return Promise.resolve(filteredResults);
-				})
-			})
+				});
+			});
 
 		new Homey.FlowCardAction('cancel_timer')
 			.register()
+			// eslint-disable-next-line no-unused-vars
 			.registerRunListener((args, state) => {
 				return this.cancelTimer(
-					args.device,
+					args.device
 				);
 			})
 			.getArgument('device')
+			// eslint-disable-next-line no-unused-vars
 			.registerAutocompleteListener((query, args) => {
 				return this.getOnOffDevices().then(onOffDevices => {
 					let filteredResults = onOffDevices.filter(device => {
 						return (
 							device.name.toLowerCase().indexOf(query.toLowerCase()) > -1
-						)
-					})
+						);
+					});
 
 					return Promise.resolve(filteredResults);
-				})
-			})
+				});
+			});
 
 		new Homey.FlowCardCondition('is_timer_running')
 			.register()
 			.on('run', (args, state, callback) => {
 				if (args.device.id in this.timers) {
-					callback(null, true)
+					callback(null, true);
 				}
 				else {
-					callback(null, false)
+					callback(null, false);
 				}
 			})
 			.getArgument('device')
+			// eslint-disable-next-line no-unused-vars
 			.registerAutocompleteListener((query, args) => {
 				return this.getOnOffDevices().then(onOffDevices => {
 					let filteredResults = onOffDevices.filter(device => {
 						return (
 							device.name.toLowerCase().indexOf(query.toLowerCase()) > -1
-						)
-					})
+						);
+					});
 
 					return Promise.resolve(filteredResults);
-				})
-			})
+				});
+			});
 	}
 
 	async runScript(device, action, timeOn, ignoreWhenOn, overruleLongerTimeouts, restore = "no") {
@@ -124,15 +131,17 @@ class TimerApp extends Homey.App {
 		let oldValue = null;
 		let onOffCapabilityInstance = null;
 		const api = await this.getApi();
+		// eslint-disable-next-line multiline-comment-style
 		// TODO: reset cache (of athom API), to get the current onoff value (apparantly the cache of the web api can be out of sync)
 		// TODO: Or is there maybe another way to get a capability
 		const apiDevice = await api.devices.getDevice({ id: device.id });
+		const deviceOnoff = apiDevice.makeCapabilityInstance('onoff');
 		const timer = this.timers[device.id];
 
 		// run script when...
 		if (
 			// ... device is off
-			(apiDevice.capabilitiesObj['onoff'].value == false) ||
+			(deviceOnoff.value == false) ||
 			// ... or ignoring current on-state
 			(ignoreWhenOn == "no") ||
 			// .. or when previously activated by this script AND overrule longer enabled, or new timer is later
@@ -151,7 +160,7 @@ class TimerApp extends Homey.App {
 				// if timer is not already running, set device to desired on state 
 
 				// if restore is set to true and the device is already on, remember current value (as oldValue)
-				if (restore == "yes" && apiDevice.capabilitiesObj['onoff']) {
+				if (restore == "yes" && deviceOnoff.value) {
 					oldValue = apiDevice.capabilitiesObj[action.capability].value;
 					this.log(`remember state for ${device.name} [${device.id}] (since on and restore on) oldValue ${oldValue}`);
 				}
@@ -175,13 +184,13 @@ class TimerApp extends Homey.App {
 
 				const timer = this.timers[device.id];
 				if (timer) {
-					this.cleanupTimer(device)
+					this.cleanupTimer(device);
 
 					// turn device off, or restore to previous state
 					if (!oldValue) {
-						this.setDeviceCapabilityState(device, 'onoff', false)
+						this.setDeviceCapabilityState(device, 'onoff', false);
 					} else {
-						this.setDeviceCapabilityState(device, capabilityId, oldValue)
+						this.setDeviceCapabilityState(device, capabilityId, oldValue);
 					}
 
 				} else {
@@ -203,7 +212,7 @@ class TimerApp extends Homey.App {
 			Homey.ManagerApi.realtime('timer_started', { timers: this.exportTimers(), device: device, capability: action.capability, value: action.value, oldValue: oldValue });
 		}
 
-		return Promise.resolve(true)
+		return Promise.resolve(true);
 	}
 
 	cancelTimer(device) {
@@ -218,7 +227,7 @@ class TimerApp extends Homey.App {
 			this.log(`WARNING: No timer to Cancel for device ${device.name} [${device.id}]`);
 		}
 
-		return Promise.resolve(true)
+		return Promise.resolve(true);
 	}
 
 	cleanupTimer(device) {
@@ -240,7 +249,7 @@ class TimerApp extends Homey.App {
 		this.log(`set device ${device.name} [${device.id}] capability ${capabilityId} to ${value}`);
 
 		const api = await this.getApi();
-		await api.devices.setCapabilityValue({ deviceId: device.id, capabilityId: capabilityId, value: value })
+		await api.devices.setCapabilityValue({ deviceId: device.id, capabilityId: capabilityId, value: value });
 		
 		// update cache of apiDevice.capabilitiesObj
 		const apiDevice = await api.devices.getDevice({ id: device.id });
@@ -286,7 +295,7 @@ class TimerApp extends Homey.App {
 				device.capabilitiesObj !== null &&
 				'onoff' in device.capabilitiesObj &&
 				device.capabilitiesObj.onoff.setable
-			)
+			);
 		});
 	}
 
@@ -300,7 +309,7 @@ class TimerApp extends Homey.App {
 				device.capabilitiesObj !== null &&
 				'dim' in device.capabilitiesObj &&
 				device.capabilitiesObj.dim.setable
-			)
+			);
 		});
 	}
 
