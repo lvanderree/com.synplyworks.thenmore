@@ -25,6 +25,10 @@ For more info, see: https://community.athom.com/t/timer-v0-4-3-stable-homey-v1-5
 ## Known issues
 * Version 0.4.2 does not run on Homey V1.5. This compatibility issue is not defined in the package.json so 0.4.2 is revoked, and replaced by 0.5.0 
 
+## Version 0.7.3 β
+Homey V2: 
+   - Fixed a bug where timers wouldn't start anymore, after you manually turned off a device while the timer was still running
+
 ## Version 0.7.2 β
 Homey V2: 
    - updated athom api library, since it caches capability values, without updating them, but unfortunately without improvements
@@ -84,10 +88,3 @@ initial release
 
 ## Final note
 The repository can be found at: https://github.com/lvanderree/com.synplyworks.thenmore
-
-If you like the app, consider a donation to support development :beer: 
- 
-[![Donate][pp-donate-image]][pp-donate-link]
-
-[pp-donate-link]: https://paypal.me/lvanderree
-[pp-donate-image]: https://img.shields.io/badge/Donate-PayPal-green.svg

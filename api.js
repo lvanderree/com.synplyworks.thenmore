@@ -14,9 +14,8 @@ module.exports = [
     },
     {
         method:         'DELETE',
-        path:           '/timers',
-        public:         false,
         path:           '/timers/:id',
+        public:         false,
         fn: function( args, callback ){
             var result = Homey.app.cancelTimer( {id: args.params.id} );
 
@@ -25,4 +24,4 @@ module.exports = [
         }
     }
 
-]
+];
