@@ -128,16 +128,14 @@ class TimerApp extends Homey.App {
 
 	async runScript(device, action, timeOn, ignoreWhenOn, overruleLongerTimeouts, restore = "no") {
 
-		let oldValue = null;
-		let onOffCapabilityInstance = null;
 		const api = await this.getApi();
-		// eslint-disable-next-line multiline-comment-style
-		// TODO: reset cache (of athom API), to get the current onoff value (apparantly the cache of the web api can be out of sync)
-		// TODO: Or is there maybe another way to get a capability
 		const apiDevice = await api.devices.getDevice({ id: device.id });
 		const deviceOnoff = apiDevice.makeCapabilityInstance('onoff');
 		const timer = this.timers[device.id];
-
+		
+		let oldValue = null;
+		let onOffCapabilityInstance = null;
+		
 		// run script when...
 		if (
 			// ... device is off

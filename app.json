@@ -1,6 +1,6 @@
 {
   "id": "com.synplyworks.thenmore",
-  "version": "0.7.2",
+  "version": "0.7.3",
   "compatibility": ">=2.0.0",
   "sdk": 2,
   "name": {
@@ -90,15 +90,15 @@
               {
                 "id": "yes",
                 "label": {
-                  "en": "Ignore when device is already on",
-                  "nl": "Negeer als het apparaat al aan staat"
+                  "en": "Don't start timer, when the device is already on",
+                  "nl": "Start geen timer, als het apparaat al aan staat"
                 }
               },
               {
                 "id": "no",
                 "label": {
-                  "en": "Control it anyway",
-                  "nl": "Beheers het toch"
+                  "en": "Start timer, even when the device is already on",
+                  "nl": "Start de timer, zelfs als het apparaat al aan staat"
                 }
               }
             ]
@@ -110,15 +110,15 @@
               {
                 "id": "no",
                 "label": {
-                  "en": "Keep longer timeouts",
-                  "nl": "Langere timeouts behouden"
+                  "en": "Use longest timeouts",
+                  "nl": "Langste timeouts gebruiken"
                 }
               },
               {
                 "id": "yes",
                 "label": {
-                  "en": "Shorter timeouts win",
-                  "nl": "Kortere timeouts worden toch gezet"
+                  "en": "Shortest timeouts wins",
+                  "nl": "Kortste timeouts worden toegepast"
                 }
               }
             ]
