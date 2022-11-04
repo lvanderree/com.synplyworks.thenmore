@@ -1,6 +1,6 @@
 {
   "name": "com.synplyworks.thenmore",
-  "version": "0.7.3",
+  "version": "0.8.9",
   "description": "Homey Timer addon",
   "main": "app.js",
   "scripts": {
@@ -12,9 +12,10 @@
   "author": "Leon van der Ree",
   "license": "GPL3",
   "dependencies": {
-    "athom-api": "^2.1.220"
+    "homey-api": "^1.0.1"
   },
   "devDependencies": {
+    "homey": "^2.30.7",
     "inspector": "^0.5.0"
   }
 }

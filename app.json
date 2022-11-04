@@ -1,8 +1,9 @@
 {
   "id": "com.synplyworks.thenmore",
-  "version": "0.7.3",
-  "compatibility": ">=2.0.0",
-  "sdk": 2,
+  "version": "0.8.0",
+  "compatibility": ">=5.0.0",
+  "sdk": 3,
+  "brandColor": "#0000FF",
   "name": {
     "en": "Timer",
     "nl": "Timer"
@@ -11,6 +12,7 @@
     "en": "Timer adds Timer functionality in the Then clause of your flows",
     "nl": "Timer voegt Timer functionaliteit toe in de Dan functie van je flows"
   },
+  "platforms": ["local"],
   "permissions": [
     "homey:manager:api"
   ],
@@ -230,6 +232,10 @@
           "en": "Cancel timer",
           "nl": "Annuleer timer"
         },
+        "titleFormatted": {
+          "en": "Cancel timer for [[device]]",
+          "nl": "Annuleer timer voor [[device]]"
+        },
         "hint": {
           "en": "Cancel a running timer, preventing the device from turning off",
           "nl": "Stop een lopende timer, waardoor het apparaat niet uit zal schakelen"
@@ -253,6 +259,10 @@
           "en": "Timer !{{is|isn't}} running",
           "nl": "Timer loopt !{{|niet}}"
         },
+        "titleFormatted": {
+          "en": "Timer for [[device]] !{{is|isn't}} running",
+          "nl": "Timer voor [[device]] loopt !{{|niet}}"
+        },
         "args": [
           {
             "name": "device",
@@ -265,5 +275,15 @@
         ]
       }
     ]
+  },
+  "api": {
+    "getTimers": {
+      "method": "get",
+      "path": "/timers"
+    },
+    "deleteTimer": {
+      "method": "delete",
+      "path": "/timers/:id"
+    }
   }
 }

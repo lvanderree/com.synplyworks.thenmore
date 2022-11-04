@@ -1,0 +1,47 @@
+{
+  "0.1.0": {
+    "en": "initial release"
+  },
+  "0.2.0": {
+    "en": "Added 2 extra cards: [condition: is timer running, action: cancel running timer]"
+  },
+  "0.3.0": {
+    "en": "added extra feature on dim card. Restore previous dim level"
+  },
+  "0.3.1": {
+    "en": "Fixed a bug that prevented timers could get reset"
+  },
+  "0.4.0": {
+    "en": "Added settings page, to see and cancel running timers"
+  },
+  "0.4.1": {
+    "en": "Added details view on a timer in the settings page"
+  },
+  "0.5.0": {
+    "en": "Homey V2 compatibility: changed api call to change device state"
+  },
+  "0.6.0": {
+    "en": "Cancel timer when light turned off manually, handle name changes of devices"
+  },
+  "0.6.1": {
+    "en": "Fixed settings page could contain timers that where expired"
+  },
+  "0.6.2": {
+    "en": "Fixed selecting devices. Fixed missing reference to event listener, making the app crash. Extra cache clear of api, to force update device state. Updated athom api"
+  },
+  "0.7.0": {
+    "en": "Removed instance caching of API results in app. Fixed a bug when filtering on devices, while zone name isn't available anymore"
+  },
+  "0.7.1": {
+    "en": "Refactored code to be more consistent. Fix retrieving capability value, instead of set. Fixed an issue, where old capability values got lost. Handle missing reference to previous timer."
+  },
+  "0.7.2": {
+    "en": "Implemented a dumb cache"
+  },
+  "0.7.3": {
+    "en": "Fixed a bug where timers wouldn't start anymore, after you manually turned off a device while the timer was still running"
+  },
+  "0.8.0": {
+    "en": "Build on Homey SDK v3"
+  }
+}
