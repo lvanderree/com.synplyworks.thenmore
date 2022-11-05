@@ -43,5 +43,8 @@
   },
   "0.8.0": {
     "en": "Build on Homey SDK v3"
+  },
+  "0.8.1": {
+    "en": "Fixed reading device onoff-capability value"
   }
 }

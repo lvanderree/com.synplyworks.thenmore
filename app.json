@@ -1,6 +1,6 @@
 {
   "id": "com.synplyworks.thenmore",
-  "version": "0.8.0",
+  "version": "0.8.1",
   "compatibility": ">=5.0.0",
   "sdk": 3,
   "brandColor": "#0000FF",
@@ -12,7 +12,9 @@
     "en": "Timer adds Timer functionality in the Then clause of your flows",
     "nl": "Timer voegt Timer functionaliteit toe in de Dan functie van je flows"
   },
-  "platforms": ["local"],
+  "platforms": [
+    "local"
+  ],
   "permissions": [
     "homey:manager:api"
   ],
