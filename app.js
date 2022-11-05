@@ -124,7 +124,7 @@ class TimerApp extends Homey.App {
 	async runScript(device, action, timeOn, ignoreWhenOn, overruleLongerTimeouts, restore = "no") {
 		const api = await this.getApi();
 		const apiDevice = await api.devices.getDevice({ id: device.id });
-		const deviceOnoff = apiDevice.makeCapabilityInstance('onoff');
+		const deviceOnoff = apiDevice.capabilitiesObj.onoff;
 		const timer = this.timers[device.id];
 		
 		let oldValue = null;
@@ -161,8 +161,8 @@ class TimerApp extends Homey.App {
 				this.setDeviceCapabilityState(device, action.capability, action.value);
 
 				// register listener to clean-up timer when off-state triggered
-				onOffCapabilityInstance = apiDevice.makeCapabilityInstance('onoff', function (device, state) {
-					if (state == false) {
+				onOffCapabilityInstance = apiDevice.makeCapabilityInstance('onoff', function (device, value) {
+					if (value == false) {
 						this.log(`Listener: Device ${device.name} [${device.id}] turned off, disable running timer`);
 						this.cancelTimer(device);
 					}
