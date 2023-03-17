@@ -46,5 +46,8 @@
   },
   "0.8.1": {
     "en": "Fixed reading device onoff-capability value"
+  },
+  "0.8.2": {
+    "en": "converted to typescript, possible fix for is_timer_running condition card"
   }
 }

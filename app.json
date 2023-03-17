@@ -1,6 +1,6 @@
 {
   "id": "com.synplyworks.thenmore",
-  "version": "0.8.1",
+  "version": "0.8.2",
   "compatibility": ">=5.0.0",
   "sdk": 3,
   "brandColor": "#0000FF",
@@ -64,6 +64,10 @@
         "title": {
           "en": "Timer on/off",
           "nl": "Timer aan/uit"
+        },
+        "titleFormatted": {
+          "en": "Timer for [[device]] on [[time_on]] seconds, [[ignore_when_on]], [[overrule_longer_timeouts]]",
+          "nl": "Timer voor [[device]] op [[time_on]] seconden, [[ignore_when_on]], [[overrule_longer_timeouts]]"
         },
         "hint": {
           "en": "With this action you can keep your device enabled for some time",
@@ -134,6 +138,10 @@
         "title": {
           "en": "Timer dim",
           "nl": "Timer dim"
+        },
+        "titleFormatted": {
+          "en": "Dim-Timer for [[device]] with brightness [[brightness_level]] for [[time_on]] seconds, [[ignore_when_on]], [[overrule_longer_timeouts]], restore: [[restore]]",
+          "nl": "Dim-Timer voor [[device]] met brightness [[brightness_level]] voor [[time_on]] seconden, [[ignore_when_on]], [[overrule_longer_timeouts]], herstel: [[restore]]"
         },
         "hint": {
           "en": "With this action you can keep your dimable device enabled for some time",
