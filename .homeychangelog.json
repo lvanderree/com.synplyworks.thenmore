@@ -49,5 +49,8 @@
   },
   "0.8.2": {
     "en": "converted to typescript, possible fix for is_timer_running condition card"
+  },
+  "0.8.3": {
+    "en": "remove source-map-support update old callback"
   }
 }

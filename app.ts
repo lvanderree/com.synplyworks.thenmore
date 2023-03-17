@@ -1,8 +1,4 @@
-import sourceMapSupport from 'source-map-support';
 import {HomeyAPI} from "athom-api";
-
-sourceMapSupport.install();
-
 
 const Homey = require('homey');
 const {HomeyAPIApp} = require('homey-api');
@@ -100,16 +96,16 @@ export default class TimerApp extends Homey.App {
             });
 
         this.homey.flow.getConditionCard('is_timer_running')
-            .registerRunListener(async (args: any, state: any, callback: any) => {
+            .registerRunListener(async (args: any) => {
                 if (args.device.id in this.timers) {
-                    callback(null, true);
+                    return true;
                 } else {
-                    callback(null, false);
+                    return false;
                 }
             })
             .getArgument('device')
             // eslint-disable-next-line no-unused-vars
-            .registerAutocompleteListener(async (query: string, args: any) => {
+            .registerAutocompleteListener(async (query: string) => {
                 return this.getOnOffDevices().then(onOffDevices => {
                     return onOffDevices.filter(device => {
                         return (
