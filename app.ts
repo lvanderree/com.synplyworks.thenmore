@@ -10,7 +10,9 @@ const DEBUG = process.env.DEBUG === "1";
 interface Timer {
   id: NodeJS.Timeout;
   device: Device;
-  offTime: number;
+  timeOn: number; // Original duration of the timer in seconds
+  startTime: number; // Timestamp when the timer started
+  offTime: number; // Timestamp when the timer is supposed to end
   capability: string;
   value: any;
   oldValue: any;
@@ -180,6 +182,11 @@ export default class TimerApp extends Homey.App {
       if (timer) {
         oldValue = timer.oldValue;
         capabilityInstance = timer.onOffCapabilityInstance;
+
+        const remainingTime = Math.max(0, Math.round((timer.offTime - Date.now()) / 1000));
+        const previousTimeOn = timer.timeOn;
+        this.log(`Cancelling previous timer for device ${device.name} [${device.id}], ` + `remaining time: ${remainingTime} seconds out of ${previousTimeOn} seconds`);
+
         await this.cancelTimer(device);
       } else {
         if (action.capability === "dim" && restore === "yes") {
@@ -230,9 +237,12 @@ export default class TimerApp extends Homey.App {
         });
       }, timeOn * 1000);
 
+      // Store the timer with additional information
       this.timers[device.id] = {
         id: timeoutId,
         device: device,
+        timeOn: timeOn,
+        startTime: Date.now(),
         offTime: Date.now() + timeOn * 1000,
         capability: action.capability,
         value: action.value,
@@ -335,7 +345,7 @@ export default class TimerApp extends Homey.App {
    */
   async getOnOffDevices(): Promise<Device[]> {
     const allDevices = await this.getAllDevices();
-  
+
     return allDevices.filter((device) => {
       return (
         device.capabilitiesObj &&
@@ -352,7 +362,7 @@ export default class TimerApp extends Homey.App {
    */
   async getDimDevices(): Promise<Device[]> {
     const allDevices = await this.getAllDevices();
-  
+
     return allDevices.filter((device) => {
       return (
         device.capabilitiesObj &&
