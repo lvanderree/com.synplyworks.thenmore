@@ -52,5 +52,8 @@
   },
   "0.8.3": {
     "en": "remove source-map-support update old callback"
+  },
+  "0.8.10": {
+    "en": "small fixes"
   }
 }

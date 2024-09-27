@@ -97,11 +97,7 @@ export default class TimerApp extends Homey.App {
 
         this.homey.flow.getConditionCard('is_timer_running')
             .registerRunListener(async (args: any) => {
-                if (args.device.id in this.timers) {
-                    return true;
-                } else {
-                    return false;
-                }
+                return (args.device.id in this.timers)
             })
             .getArgument('device')
             // eslint-disable-next-line no-unused-vars
@@ -116,7 +112,10 @@ export default class TimerApp extends Homey.App {
             });
     }
 
-    async runScript(device: Device, action: { capability: string; value: any }, timeOn: any, ignoreWhenOn: any, overruleLongerTimeouts: any, restore: string = "no") {
+    async runScript(device: Device, action: {
+        capability: string;
+        value: any
+    }, timeOn: any, ignoreWhenOn: any, overruleLongerTimeouts: any, restore: string = "no") {
         const api = await this.getApi();
         const apiDevice = await api.devices.getDevice({id: device.id});
         const deviceOnoff = apiDevice.capabilitiesObj.onoff;
@@ -131,7 +130,7 @@ export default class TimerApp extends Homey.App {
             (deviceOnoff.value == false) ||
             // ... or ignoring current on-state
             (ignoreWhenOn == "no") ||
-            // .. or when previously activated by this script AND overrule longer enabled, or new timer is later
+            // ... or when previously activated by this script AND overrule longer enabled, or new timer is later
             (
                 timer &&
                 ((overruleLongerTimeouts == "yes") || (new Date().getTime() + timeOn * 1000 > timer.offTime))
@@ -153,7 +152,7 @@ export default class TimerApp extends Homey.App {
                 }
 
                 // turn device on, according to chosen action-card/capability
-                this.setDeviceCapabilityState(device, action.capability, action.value);
+                await this.setDeviceCapabilityState(device, action.capability, action.value);
 
                 // register listener to clean-up timer when off-state triggered
                 onOffCapabilityInstance = apiDevice.makeCapabilityInstance('onoff', function (this: TimerApp, device: Device, value: boolean) {
@@ -166,7 +165,7 @@ export default class TimerApp extends Homey.App {
 
             // (re)set timeout, with following functionality
             this.log(`set timer for device ${device.name} [${device.id}] to ${timeOn} seconds, oldValue: ${oldValue ? oldValue : false}`);
-            let timeoudId = setTimeout(function (this: TimerApp, device: Device, capabilityId: string , oldValue: any) {
+            let timeoudId = setTimeout(function (this: TimerApp, device: Device, capabilityId: string, oldValue: any) {
                 this.log(`Timeout for ${device.name} [${device.id}]`);
 
                 const timer = this.timers[device.id];
