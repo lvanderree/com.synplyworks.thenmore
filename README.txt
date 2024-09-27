@@ -16,32 +16,12 @@ When the flow (or another flow with the same device entered in the Timer card) i
 
 Feel free to add multiple Timer-cards in the same flow, or select the same device in more than one flow via the Timer-cards.
 
+For more info, see: https://community.athom.com/t/timer-v0-4-3-stable-homey-v1-5-0-6-1-beta-homey-v2-fka-then-more-add-timers-to-temporarily-turn-on-devices/3722
+
+
 ## Todo
-* Add functionality to handle external triggers that turned off devices
+* Find a way to handle motion started/ended triggers better, since with continuous motion, the timer will end sooner than (maybe even before) the last motion.
 
-## Known issues
-* None so far
 
-## Version 0.4.3
-Promoted 0.4.1 as stable, renamed as 0.4.3 (revoked 0.4.2 which is not compatible with Homey V2)
-
-## Version 0.4.1 β
-added details view on a timer in the settings page
-
-## Version 0.4.0 β
-added settings page, to see and cancel running timers
-
-## Version 0.3.1
-fixed a bug that prevented timers could get reset
-
-## Version 0.3.0 β
-added extra feature on dim card
-* restore previous dim level
-
-## Version 0.2.0 β
-added 2 extra cards
-* condition: is timer running
-* action: cancel running timer
-
-## Version 0.1.0 β
-initial release
+## Final note
+The repository can be found at: https://github.com/lvanderree/com.synplyworks.thenmore
