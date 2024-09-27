@@ -20,11 +20,17 @@ interface Timer {
 export default class TimerApp extends Homey.App {
   private timers: { [deviceId: string]: Timer } = {};
 
-  onInit() {
+  async onInit() {
     this.log(`${this.id} is running...(debug mode ${DEBUG ? "on" : "off"})`);
     if (DEBUG) {
       require("inspector").open(9229, "0.0.0.0");
     }
+
+    // Retrieve the cloudUrl
+    const image = await this.homey.images.createImage();
+    // @ts-ignore
+    this.cloudUrl = image.cloudUrl.split("/api/")[0];
+    await image.unregister();
 
     this.log("Timer App is initializing...");
 
@@ -43,14 +49,28 @@ export default class TimerApp extends Homey.App {
         return this.runScript(args.device, { capability: "onoff", value: true }, args.time_on, args.ignore_when_on, args.overrule_longer_timeouts);
       })
       .getArgument("device")
-
       .registerAutocompleteListener(async (query: string, args: any) => {
-        return this.getOnOffDevices().then((onOffDevices) => {
-          // filter key that have a matching name
-          return onOffDevices.filter((device) => {
-            return device.name.toLowerCase().indexOf(query.toLowerCase()) > -1;
-          });
-        });
+        const onOffDevices = await this.getOnOffDevices();
+        const devicesWithIcons = await Promise.all(
+          onOffDevices.map(async (device) => {
+            const api = await this.getApi();
+            const fullDevice = await api.devices.getDevice({ id: device.id });
+
+            const iconUrl = fullDevice.iconObj?.url && this.cloudUrl ? `${this.cloudUrl}${fullDevice.iconObj.url}` : null;
+
+            return {
+              id: fullDevice.id,
+              name: fullDevice.name.trim(),
+              icon: iconUrl
+            };
+          })
+        );
+        const filteredDevices = devicesWithIcons
+          .filter((device) => device.name.length > 0)
+          .filter((device) => device.name.toLowerCase().includes(query.toLowerCase()))
+          .sort((a, b) => a.name.localeCompare(b.name));
+
+        return filteredDevices;
       });
 
     this.homey.flow
@@ -61,14 +81,28 @@ export default class TimerApp extends Homey.App {
       })
       // TODO: DRY registerAutocompleteListener
       .getArgument("device")
-
       .registerAutocompleteListener(async (query: string, args: any) => {
-        return this.getDimDevices().then((dimDevices) => {
-          // filter devices that have a matching name
-          return dimDevices.filter((device) => {
-            return device.name.toLowerCase().indexOf(query.toLowerCase()) > -1;
-          });
-        });
+        const onOffDevices = await this.getDimDevices();
+        const devicesWithIcons = await Promise.all(
+          onOffDevices.map(async (device) => {
+            const api = await this.getApi();
+            const fullDevice = await api.devices.getDevice({ id: device.id });
+
+            const iconUrl = fullDevice.iconObj?.url && this.cloudUrl ? `${this.cloudUrl}${fullDevice.iconObj.url}` : null;
+
+            return {
+              id: fullDevice.id,
+              name: fullDevice.name.trim(),
+              icon: iconUrl
+            };
+          })
+        );
+        const filteredDevices = devicesWithIcons
+          .filter((device) => device.name.length > 0)
+          .filter((device) => device.name.toLowerCase().includes(query.toLowerCase()))
+          .sort((a, b) => a.name.localeCompare(b.name));
+
+        return filteredDevices;
       });
 
     this.homey.flow
@@ -78,13 +112,28 @@ export default class TimerApp extends Homey.App {
         return this.cancelTimer(args.device);
       })
       .getArgument("device")
+      .registerAutocompleteListener(async (query: string, args: any) => {
+        const onOffDevices = await this.getOnOffDevices();
+        const devicesWithIcons = await Promise.all(
+          onOffDevices.map(async (device) => {
+            const api = await this.getApi();
+            const fullDevice = await api.devices.getDevice({ id: device.id });
 
-      .registerAutocompleteListener(async (query: string) => {
-        return this.getOnOffDevices().then((onOffDevices) => {
-          return onOffDevices.filter((device) => {
-            return device.name.toLowerCase().indexOf(query.toLowerCase()) > -1;
-          });
-        });
+            const iconUrl = fullDevice.iconObj?.url && this.cloudUrl ? `${this.cloudUrl}${fullDevice.iconObj.url}` : null;
+
+            return {
+              id: fullDevice.id,
+              name: fullDevice.name.trim(),
+              icon: iconUrl
+            };
+          })
+        );
+        const filteredDevices = devicesWithIcons
+          .filter((device) => device.name.length > 0)
+          .filter((device) => device.name.toLowerCase().includes(query.toLowerCase()))
+          .sort((a, b) => a.name.localeCompare(b.name));
+
+        return filteredDevices;
       });
 
     this.homey.flow
@@ -93,12 +142,28 @@ export default class TimerApp extends Homey.App {
         return args.device.id in this.timers;
       })
       .getArgument("device")
-      .registerAutocompleteListener(async (query: string) => {
-        return this.getOnOffDevices().then((onOffDevices) => {
-          return onOffDevices.filter((device) => {
-            return device.name.toLowerCase().indexOf(query.toLowerCase()) > -1;
-          });
-        });
+      .registerAutocompleteListener(async (query: string, args: any) => {
+        const onOffDevices = await this.getOnOffDevices();
+        const devicesWithIcons = await Promise.all(
+          onOffDevices.map(async (device) => {
+            const api = await this.getApi();
+            const fullDevice = await api.devices.getDevice({ id: device.id });
+
+            const iconUrl = fullDevice.iconObj?.url && this.cloudUrl ? `${this.cloudUrl}${fullDevice.iconObj.url}` : null;
+
+            return {
+              id: fullDevice.id,
+              name: fullDevice.name.trim(),
+              image: iconUrl
+            };
+          })
+        );
+        const filteredDevices = devicesWithIcons
+          .filter((device) => device.name.length > 0)
+          .filter((device) => device.name.toLowerCase().includes(query.toLowerCase()))
+          .sort((a, b) => a.name.localeCompare(b.name));
+
+        return filteredDevices;
       });
   }
 
@@ -260,10 +325,7 @@ export default class TimerApp extends Homey.App {
   // Get all devices function for API
   async getAllDevices(): Promise<Device[]> {
     const api = await this.getApi();
-    const devices = await api.devices.getDevices();
-    if (!devices) {
-      return [];
-    }
+    const devices: { [id: string]: Device } = await api.devices.getDevices();
     return Object.values(devices);
   }
 
@@ -272,9 +334,11 @@ export default class TimerApp extends Homey.App {
    * and filter all without on/off capability
    */
   async getOnOffDevices(): Promise<Device[]> {
-    return (await this.getAllDevices()).filter((device: Device) => {
+    const allDevices = await this.getAllDevices();
+  
+    return allDevices.filter((device) => {
       return (
-        device.capabilitiesObj !== null &&
+        device.capabilitiesObj &&
         "onoff" in device.capabilitiesObj &&
         // @ts-ignore
         device.capabilitiesObj.onoff.setable
@@ -287,9 +351,11 @@ export default class TimerApp extends Homey.App {
    * and filter all without dim capability
    */
   async getDimDevices(): Promise<Device[]> {
-    return (await this.getAllDevices()).filter((device) => {
+    const allDevices = await this.getAllDevices();
+  
+    return allDevices.filter((device) => {
       return (
-        device.capabilitiesObj !== null &&
+        device.capabilitiesObj &&
         "dim" in device.capabilitiesObj &&
         // @ts-ignore
         device.capabilitiesObj.dim.setable
