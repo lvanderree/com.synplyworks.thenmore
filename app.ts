@@ -131,6 +131,7 @@ export default class TimerApp extends Homey.App {
             return {
               id: fullDevice.id,
               name: fullDevice.name.trim(),
+              // Ensure 'icon' is 'string | undefined' by replacing 'null' with 'undefined'
               icon: iconUrl || undefined
             };
           })
@@ -195,7 +196,6 @@ export default class TimerApp extends Homey.App {
         });
       }, remainingTime);
 
-<<<<<<< HEAD
       // Re-establish the capability listener
       const capabilityInstance = device.makeCapabilityInstance(storedTimer.capability, (value: any) => {
         if (!value || (storedTimer.capability === "dim" && value === 0)) {
@@ -205,9 +205,6 @@ export default class TimerApp extends Homey.App {
       });
 
       // Re-create the timer object with the capabilityInstance
-=======
-      // Re-create the timer object
->>>>>>> 6eca8ab60c422daa70e36c8e21d22939b0c1d7a4
       this.timers[device.id] = {
         id: timeoutId,
         device: device,
@@ -217,11 +214,7 @@ export default class TimerApp extends Homey.App {
         capability: storedTimer.capability,
         value: storedTimer.value,
         oldValue: storedTimer.oldValue,
-<<<<<<< HEAD
         onOffCapabilityInstance: capabilityInstance
-=======
-        onOffCapabilityInstance: null 
->>>>>>> 6eca8ab60c422daa70e36c8e21d22939b0c1d7a4
       };
 
       this.log(`Restored timer for device ${device.name} [${device.id}] with ${remainingTime / 1000} seconds remaining.`);
@@ -251,16 +244,8 @@ export default class TimerApp extends Homey.App {
       }
     }
 
-<<<<<<< HEAD
     // Cleanup the timer, which destroys the capability listener and removes the timer reference
     this.cleanupTimer(device);
-=======
-    // Emit event to signal settings page the timer can be removed
-    this.homey.api.realtime("timer_deleted", {
-      timers: this.exportTimers(),
-      device: device
-    });
->>>>>>> 6eca8ab60c422daa70e36c8e21d22939b0c1d7a4
   }
 
   /**
