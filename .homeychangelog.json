@@ -55,5 +55,8 @@
   },
   "0.8.10": {
     "en": "small fixes"
+  },
+  "0.8.13": {
+    "en": "New app logo, code improvements, sort devices alphabetically, add logos"
   }
 }
