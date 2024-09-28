@@ -59,7 +59,6 @@ export default class TimerApp extends Homey.App {
 
   /**
    * Initializes all flow cards and registers their respective listeners.
-   * Applies the DRY principle by using a helper method for autocomplete listeners.
    */
   initFlowCards() {
     // Action Card: then_more_on_off
@@ -90,7 +89,6 @@ export default class TimerApp extends Homey.App {
         );
       });
     this.registerDeviceAutocompleteListener(thenMoreDim, 'dim');
-    // TODO: DRY registerAutocompleteListener
 
     // Action Card: cancel_timer
     const cancelTimer = this.homey.flow.getActionCard("cancel_timer");
@@ -111,7 +109,6 @@ export default class TimerApp extends Homey.App {
 
   /**
    * Registers an autocomplete listener for a given flow card based on the capability type.
-   * This method abstracts the repeated autocomplete listener logic to adhere to the DRY principle.
    *
    * @param actionCard - The flow card (action or condition) to register the listener on.
    * @param capabilityType - The type of capability ('onoff' or 'dim') to filter devices.
@@ -208,7 +205,7 @@ export default class TimerApp extends Homey.App {
         capability: storedTimer.capability,
         value: storedTimer.value,
         oldValue: storedTimer.oldValue,
-        onOffCapabilityInstance: null // Re-attaching listeners is complex; consider if needed
+        onOffCapabilityInstance: null 
       };
 
       this.log(`Restored timer for device ${device.name} [${device.id}] with ${remainingTime / 1000} seconds remaining.`);
