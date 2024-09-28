@@ -195,7 +195,15 @@ export default class TimerApp extends Homey.App {
         });
       }, remainingTime);
 
-      // Re-create the timer object
+      // Re-establish the capability listener
+      const capabilityInstance = device.makeCapabilityInstance(storedTimer.capability, (value: any) => {
+        if (!value || (storedTimer.capability === "dim" && value === 0)) {
+          this.log(`Listener: Device ${device.name} [${device.id}] turned off or dimmed to zero, disabling timer`);
+          this.cancelTimer(device);
+        }
+      });
+
+      // Re-create the timer object with the capabilityInstance
       this.timers[device.id] = {
         id: timeoutId,
         device: device,
@@ -205,7 +213,7 @@ export default class TimerApp extends Homey.App {
         capability: storedTimer.capability,
         value: storedTimer.value,
         oldValue: storedTimer.oldValue,
-        onOffCapabilityInstance: null 
+        onOffCapabilityInstance: capabilityInstance
       };
 
       this.log(`Restored timer for device ${device.name} [${device.id}] with ${remainingTime / 1000} seconds remaining.`);
@@ -235,11 +243,8 @@ export default class TimerApp extends Homey.App {
       }
     }
 
-    // Emit event to signal settings page the timer can be removed
-    this.homey.api.realtime("timer_deleted", {
-      timers: this.exportTimers(),
-      device: device
-    });
+    // Cleanup the timer, which destroys the capability listener and removes the timer reference
+    this.cleanupTimer(device);
   }
 
   /**
@@ -394,9 +399,11 @@ export default class TimerApp extends Homey.App {
   cleanupTimer(device: Device): void {
     const timer = this.timers[device.id];
     if (timer) {
-      // clean up listener for off-state
-      timer.onOffCapabilityInstance.destroy();
-      // remove reference of timer for this device
+      // Clean up listener for off-state
+      if (timer.onOffCapabilityInstance && typeof timer.onOffCapabilityInstance.destroy === 'function') {
+        timer.onOffCapabilityInstance.destroy();
+      }
+      // Remove reference of timer for this device
       delete this.timers[device.id];
       // Emit event to signal settings page the timer can be removed
       this.homey.api.realtime("timer_deleted", {
@@ -416,7 +423,7 @@ export default class TimerApp extends Homey.App {
    * @param value - The value to set the capability to.
    */
   async setDeviceCapabilityState(device: Device, capabilityId: string, value: any) {
-    this.log(`set device ${device.name} [${device.id}] capability ${capabilityId} to ${value}`);
+    this.log(`Set device ${device.name} [${device.id}] capability ${capabilityId} to ${value}`);
     try {
       const api = await this.getApi();
       await api.devices.setCapabilityValue({
@@ -424,7 +431,7 @@ export default class TimerApp extends Homey.App {
         capabilityId: capabilityId,
         value: value
       });
-      // update cache of apiDevice.capabilitiesObj
+      // Update cache of apiDevice.capabilitiesObj
       const apiDevice = await api.devices.getDevice({ id: device.id });
       apiDevice.capabilitiesObj[capabilityId].value = value;
     } catch (error) {
@@ -453,10 +460,10 @@ export default class TimerApp extends Homey.App {
    */
   exportTimers() {
     let data: any = {};
-    // clone timers, and remove the timeout-id
+    // Clone timers, and remove the timeout-id
     for (let key in this.timers) {
       data[key] = Object.assign({}, this.timers[key]);
-      delete data[key].id; // remove timeout id which cannot be exported
+      delete data[key].id; // Remove timeout id which cannot be exported
     }
     return data;
   }
