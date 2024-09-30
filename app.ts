@@ -34,6 +34,9 @@ export default class TimerApp extends Homey.App {
   private api: typeof HomeyAPIApp | null = null;
   private cloudUrl: string = "";
 
+  // Add a new property to keep track of devices currently setting a timer
+  private settingTimer: { [deviceId: string]: boolean } = {};
+
   async onInit() {
     this.log(`${this.id} is running...(debug mode ${DEBUG ? "on" : "off"})`);
     if (DEBUG) {
@@ -267,106 +270,120 @@ export default class TimerApp extends Homey.App {
     overruleLongerTimeouts: string,
     restore: string = "no"
   ): Promise<boolean> {
-    const api = await this.getApi();
-    const apiDevice = await api.devices.getDevice({ id: device.id });
-    const deviceCapability = apiDevice.capabilitiesObj[action.capability];
-    const timer = this.timers[device.id];
-
-    let oldValue: number | null = null;
-    let capabilityInstance = null;
-
-    if (
-      deviceCapability.value === false ||
-      ignoreWhenOn === "no" ||
-      (timer && (overruleLongerTimeouts === "yes" || Date.now() + timeOn * 1000 > timer.offTime))
-    ) {
-      if (timer) {
-        oldValue = timer.oldValue;
-        capabilityInstance = timer.onOffCapabilityInstance;
-
-        const remainingTime = Math.max(0, Math.round((timer.offTime - Date.now()) / 1000));
-        const previousTimeOn = timer.timeOn;
-        this.log(
-          `Cancelling previous timer for device ${device.name} [${device.id}], ` +
-            `remaining time: ${remainingTime} seconds out of ${previousTimeOn} seconds`
-        );
-
-        await this.cancelTimer(device);
-      } else {
-        if (action.capability === "dim" && restore === "yes") {
-          oldValue = deviceCapability.value as number;
-          this.log(`Remembered state for ${device.name} [${device.id}] oldValue: ${oldValue}`);
-        }
-
-        await this.setDeviceCapabilityState(device, action.capability, action.value);
-
-        capabilityInstance = apiDevice.makeCapabilityInstance(action.capability, (value: any) => {
-          if (!value || value === 0) {
-            this.log(`Listener: Device ${device.name} [${device.id}] turned off or dimmed to zero, disabling timer`);
-            this.cancelTimer(device);
-          }
-        });
-      }
-
-      let logMessage = `Set timer for device ${device.name} [${device.id}] to ${timeOn} seconds`;
-      if (oldValue !== null && oldValue !== undefined) {
-        logMessage += `, oldValue: ${oldValue}`;
-      }
-      this.log(logMessage);
-
-      const timeoutId = setTimeout(() => {
-        (async () => {
-          this.log(`Timeout for ${device.name} [${device.id}]`);
-
-          const currentTimer = this.timers[device.id];
-          if (currentTimer && currentTimer.id === timeoutId) {
-            this.cleanupTimer(device);
-
-            if (currentTimer.oldValue !== null && currentTimer.oldValue !== undefined) {
-              await this.setDeviceCapabilityState(device, currentTimer.capability, currentTimer.oldValue);
-            } else {
-              if (currentTimer.capability === "onoff") {
-                await this.setDeviceCapabilityState(device, "onoff", false);
-              } else if (currentTimer.capability === "dim") {
-                await this.setDeviceCapabilityState(device, "dim", 0);
-              } else {
-                await this.setDeviceCapabilityState(device, currentTimer.capability, false);
-              }
-            }
-          } else {
-            this.log(`Timer expired for ${device.name} [${device.id}], but it was already canceled or replaced with a new timer.`);
-          }
-        })().catch((error) => {
-          this.log(`Error in timeout function for ${device.name} [${device.id}]: ${error}`);
-        });
-      }, timeOn * 1000);
-
-      // Store the timer with additional information
-      this.timers[device.id] = {
-        id: timeoutId,
-        device: device,
-        timeOn: timeOn,
-        startTime: Date.now(),
-        offTime: Date.now() + timeOn * 1000,
-        capability: action.capability,
-        value: action.value,
-        oldValue: oldValue,
-        onOffCapabilityInstance: capabilityInstance
-      };
-
-      // Save the current timers to persistent storage
-      await this.saveTimers();
-
-      this.homey.api.realtime("timer_started", {
-        timers: this.exportTimers(),
-        device: device,
-        capability: action.capability,
-        value: action.value,
-        oldValue: oldValue
-      });
+    // Check if a timer is already being set for this device
+    if (this.settingTimer[device.id]) {
+      this.log(`Timer is already being set for device ${device.name} [${device.id}]. Ignoring additional request.`);
+      return true; // Exit early to prevent multiple timers
     }
 
-    return true;
+    // Set the lock
+    this.settingTimer[device.id] = true;
+
+    try {
+      const api = await this.getApi();
+      const apiDevice = await api.devices.getDevice({ id: device.id });
+      const deviceCapability = apiDevice.capabilitiesObj[action.capability];
+      const timer = this.timers[device.id];
+
+      let oldValue: number | null = null;
+      let capabilityInstance = null;
+
+      if (
+        deviceCapability.value === false ||
+        ignoreWhenOn === "no" ||
+        (timer && (overruleLongerTimeouts === "yes" || Date.now() + timeOn * 1000 > timer.offTime))
+      ) {
+        if (timer) {
+          oldValue = timer.oldValue;
+          capabilityInstance = timer.onOffCapabilityInstance;
+
+          const remainingTime = Math.max(0, Math.round((timer.offTime - Date.now()) / 1000));
+          const previousTimeOn = timer.timeOn;
+          this.log(
+            `Cancelling previous timer for device ${device.name} [${device.id}], ` +
+              `remaining time: ${remainingTime} seconds out of ${previousTimeOn} seconds`
+          );
+
+          await this.cancelTimer(device);
+        } else {
+          if (action.capability === "dim" && restore === "yes") {
+            oldValue = deviceCapability.value as number;
+            this.log(`Remembered state for ${device.name} [${device.id}] oldValue: ${oldValue}`);
+          }
+
+          await this.setDeviceCapabilityState(device, action.capability, action.value);
+
+          capabilityInstance = apiDevice.makeCapabilityInstance(action.capability, (value: any) => {
+            if (!value || value === 0) {
+              this.log(`Listener: Device ${device.name} [${device.id}] turned off or dimmed to zero, disabling timer`);
+              this.cancelTimer(device);
+            }
+          });
+        }
+
+        let logMessage = `Set timer for device ${device.name} [${device.id}] to ${timeOn} seconds`;
+        if (oldValue !== null && oldValue !== undefined) {
+          logMessage += `, oldValue: ${oldValue}`;
+        }
+        this.log(logMessage);
+
+        const timeoutId = setTimeout(() => {
+          (async () => {
+            this.log(`Timeout for ${device.name} [${device.id}]`);
+
+            const currentTimer = this.timers[device.id];
+            if (currentTimer && currentTimer.id === timeoutId) {
+              this.cleanupTimer(device);
+
+              if (currentTimer.oldValue !== null && currentTimer.oldValue !== undefined) {
+                await this.setDeviceCapabilityState(device, currentTimer.capability, currentTimer.oldValue);
+              } else {
+                if (currentTimer.capability === "onoff") {
+                  await this.setDeviceCapabilityState(device, "onoff", false);
+                } else if (currentTimer.capability === "dim") {
+                  await this.setDeviceCapabilityState(device, "dim", 0);
+                } else {
+                  await this.setDeviceCapabilityState(device, currentTimer.capability, false);
+                }
+              }
+            } else {
+              this.log(`Timer expired for ${device.name} [${device.id}], but it was already canceled or replaced with a new timer.`);
+            }
+          })().catch((error) => {
+            this.log(`Error in timeout function for ${device.name} [${device.id}]: ${error}`);
+          });
+        }, timeOn * 1000);
+
+        // Store the timer with additional information
+        this.timers[device.id] = {
+          id: timeoutId,
+          device: device,
+          timeOn: timeOn,
+          startTime: Date.now(),
+          offTime: Date.now() + timeOn * 1000,
+          capability: action.capability,
+          value: action.value,
+          oldValue: oldValue,
+          onOffCapabilityInstance: capabilityInstance
+        };
+
+        // Save the current timers to persistent storage
+        await this.saveTimers();
+
+        this.homey.api.realtime("timer_started", {
+          timers: this.exportTimers(),
+          device: device,
+          capability: action.capability,
+          value: action.value,
+          oldValue: oldValue
+        });
+      }
+
+      return true;
+    } finally {
+      // Release the lock
+      this.settingTimer[device.id] = false;
+    }
   }
 
   /**
