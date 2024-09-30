@@ -34,8 +34,11 @@ export default class TimerApp extends Homey.App {
   private api: typeof HomeyAPIApp | null = null;
   private cloudUrl: string = "";
 
-  // Add a new property to keep track of devices currently setting a timer
+  // Keep track of devices currently setting a timer
   private settingTimer: { [deviceId: string]: boolean } = {};
+
+  // Debouncing saveTimers
+  private saveTimersTimeout: NodeJS.Timeout | null = null;
 
   async onInit() {
     this.log(`${this.id} is running...(debug mode ${DEBUG ? "on" : "off"})`);
@@ -58,6 +61,17 @@ export default class TimerApp extends Homey.App {
     await this.restoreTimers();
 
     this.log("Timer App is running...");
+  }
+
+  /**
+   * Ensures that any pending saveTimers operations are executed before the app shuts down.
+   */
+  async onUninit() {
+    if (this.saveTimersTimeout) {
+      clearTimeout(this.saveTimersTimeout);
+      await this.saveTimers();
+    }
+    this.log(`${this.id} has stopped.`);
   }
 
   /**
@@ -272,7 +286,7 @@ export default class TimerApp extends Homey.App {
   ): Promise<boolean> {
     // Check if a timer is already being set for this device
     if (this.settingTimer[device.id]) {
-      this.log(`Timer is already being set for device ${device.name} [${device.id}]. Ignoring additional request.`);
+      this.log(`WARNING: Timer is already being set for device ${device.name} [${device.id}]. Ignoring additional request.`);
       return true; // Exit early to prevent multiple timers
     }
 
@@ -367,8 +381,7 @@ export default class TimerApp extends Homey.App {
           onOffCapabilityInstance: capabilityInstance
         };
 
-        // Save the current timers to persistent storage
-        await this.saveTimers();
+        await this.scheduleSaveTimers();
 
         this.homey.api.realtime("timer_started", {
           timers: this.exportTimers(),
@@ -403,8 +416,8 @@ export default class TimerApp extends Homey.App {
       this.log(`WARNING: No timer to Cancel for device ${device.name} [${device.id}]`);
     }
 
-    // Save the current timers to persistent storage
-    await this.saveTimers();
+    // **Replace direct saveTimers call with scheduleSaveTimers for debounced saving**
+    await this.scheduleSaveTimers();
 
     return Promise.resolve(true);
   }
@@ -431,6 +444,9 @@ export default class TimerApp extends Homey.App {
     } else {
       this.log(`WARNING: No timer to cleanup for device ${device.name} [${device.id}]`);
     }
+
+    // **Replace direct saveTimers call with scheduleSaveTimers for debounced saving**
+    this.scheduleSaveTimers();
   }
 
   /**
@@ -452,6 +468,9 @@ export default class TimerApp extends Homey.App {
       // Update cache of apiDevice.capabilitiesObj
       const apiDevice = await api.devices.getDevice({ id: device.id });
       apiDevice.capabilitiesObj[capabilityId].value = value;
+
+      // **Replace direct saveTimers call with scheduleSaveTimers for debounced saving**
+      await this.scheduleSaveTimers();
     } catch (error) {
       this.log(`Error setting capability value: ${error}`);
     }
@@ -487,6 +506,19 @@ export default class TimerApp extends Homey.App {
   }
 
   /**
+   * Schedules the current timers to be saved to persistent storage with debouncing.
+   */
+  private scheduleSaveTimers() {
+    if (this.saveTimersTimeout) {
+      clearTimeout(this.saveTimersTimeout);
+    }
+    this.saveTimersTimeout = setTimeout(() => {
+      this.saveTimers();
+      this.saveTimersTimeout = null;
+    }, 2000); // 2-second debounce period
+  }
+
+  /**
    * Saves the current timers to persistent storage.
    */
   private async saveTimers() {
@@ -500,6 +532,7 @@ export default class TimerApp extends Homey.App {
       oldValue: timer.oldValue
     }));
     await this.homey.settings.set('timers', storedTimers);
+    this.log("Timers have been saved to persistent storage.");
   }
 
   /**
