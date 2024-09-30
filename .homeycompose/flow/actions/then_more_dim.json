@@ -5,8 +5,8 @@
       "nl": "Timer dim"
     },
     "titleFormatted": {
-      "en": "Dim-Timer for [[device]] with brightness [[brightness_level]] for [[time_on]] seconds, [[ignore_when_on]], [[overrule_longer_timeouts]], restore: [[restore]], trigger at [[trigger_seconds]] seconds",
-      "nl": "Dim-Timer voor [[device]] met brightness [[brightness_level]] voor [[time_on]] seconden, [[ignore_when_on]], [[overrule_longer_timeouts]], herstel: [[restore]], trigger bij [[trigger_seconds]] seconden"
+      "en": "Dim-Timer for [[device]] with brightness [[brightness_level]] for [[time_on]] seconds, [[ignore_when_on]], [[overrule_longer_timeouts]], restore: [[restore]]",
+      "nl": "Dim-Timer voor [[device]] met brightness [[brightness_level]] voor [[time_on]] seconden, [[ignore_when_on]], [[overrule_longer_timeouts]], herstel: [[restore]]"
     },
     "hint": {
       "en": "With this action you can keep your dimable device enabled for some time",
@@ -98,15 +98,6 @@
             }
           }
         ]
-      },
-      {
-        "name": "trigger_seconds",
-        "type": "number",
-        "min": 1,
-        "placeholder": {
-          "en": "Seconds at which to trigger the condition",
-          "nl": "Seconden waarop de conditie moet triggeren"
-        }
       }
     ]
   }

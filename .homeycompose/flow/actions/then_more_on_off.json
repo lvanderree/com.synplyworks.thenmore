@@ -5,8 +5,8 @@
     "nl": "Timer aan/uit"
   },
   "titleFormatted": {
-    "en": "Timer for [[device]] on [[time_on]] seconds, [[ignore_when_on]], [[overrule_longer_timeouts]], trigger at [[trigger_seconds]] seconds",
-    "nl": "Timer voor [[device]] op [[time_on]] seconden, [[ignore_when_on]], [[overrule_longer_timeouts]], trigger bij [[trigger_seconds]] seconden"
+    "en": "Timer for [[device]] on [[time_on]] seconds, [[ignore_when_on]], [[overrule_longer_timeouts]]",
+    "nl": "Timer voor [[device]] op [[time_on]] seconden, [[ignore_when_on]], [[overrule_longer_timeouts]]"
   },
   "hint": {
     "en": "With this action you can keep your device enabled for some time",
@@ -69,15 +69,6 @@
           }
         }
       ]
-    },
-    {
-      "name": "trigger_seconds",
-      "type": "number",
-      "min": 1,
-      "placeholder": {
-        "en": "Seconds at which to trigger the condition",
-        "nl": "Seconden waarop de conditie moet triggeren"
-      }
     }
   ]
 }
